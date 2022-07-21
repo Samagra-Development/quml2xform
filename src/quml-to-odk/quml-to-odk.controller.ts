@@ -8,6 +8,6 @@ export class QumlToOdkController {
 
   @Post()
   create(@Body() createQumlToOdkDto: QuestionBankFilterDto): any {
-    return this.questionBankService.fetch(createQumlToOdkDto, 5);
+    return this.questionBankService.fetch(createQumlToOdkDto);
   }
 }

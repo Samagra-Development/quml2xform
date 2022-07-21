@@ -1,18 +1,21 @@
-import { IsEmpty, IsNotEmpty, IsString } from "class-validator";
+import { IsArray, IsNotEmpty, IsNumber } from "class-validator";
 
 export class QuestionBankFilterDto {
-  @IsString()
+  @IsArray()
   @IsNotEmpty()
-  public board: string;
+  public boards: string;
 
-  @IsString()
+  @IsArray()
   @IsNotEmpty()
-  public grade: string;
+  public grades: string;
 
-  @IsString()
+  @IsArray()
   @IsNotEmpty()
-  public subject: string;
+  public subjects: string;
 
-  @IsString()
-  public competency: string;
+  @IsArray()
+  public competencies: string;
+
+  @IsNumber()
+  public randomQuestionsCount: number;
 }
