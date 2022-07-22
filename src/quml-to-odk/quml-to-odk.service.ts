@@ -2,16 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { GenerateFormDto } from './dto/generate-form.dto';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, map } from 'rxjs';
+import { exec } from 'child_process';
 
 @Injectable()
 export class QumlToOdkService {
-  private questionBankUrl: string = process.env.QUESTION_BANK_URL;
-  private questionDetailsUrl: string = process.env.QUESTION_BANK_DETAILS_URL;
+  // config file for the variables being used across the service
+  private config = {
+    questionBankUrl: process.env.QUML_ODK_QUESTION_BANK_URL,
+    questionDetailsUrl: process.env.QUML_ODK_QUESTION_BANK_DETAILS_URL,
+    xslxFilesPath: process.env.QUML_ODK_QUESTION_BANK_DETAILS_URL
+      ? process.env.QUML_ODK_QUESTION_BANK_DETAILS_URL
+      : './xslxForms', // defaults to current directory
+    odkFormsPath: process.env.QUML_ODK_QUESTION_BANK_DETAILS_URL
+      ? process.env.QUML_ODK_QUESTION_BANK_DETAILS_URL
+      : './odkForms', // defaults to current directory
+  };
 
   constructor(private readonly httpService: HttpService) {}
 
   async fetchQuestions(filters: GenerateFormDto): Promise<any> {
-    console.log(this.questionBankUrl);
     const requestBody = {
       request: {
         filters: {
@@ -26,7 +35,7 @@ export class QumlToOdkService {
 
     const response = await lastValueFrom(
       this.httpService
-        .post(this.questionBankUrl, requestBody, {
+        .post(this.config.questionBankUrl, requestBody, {
           headers: { 'Content-Type': 'application/json' },
         })
         .pipe(
@@ -78,7 +87,7 @@ export class QumlToOdkService {
     return lastValueFrom(
       this.httpService
         .post(
-          this.questionDetailsUrl,
+          this.config.questionDetailsUrl,
           {
             request: {
               search: {
@@ -96,5 +105,29 @@ export class QumlToOdkService {
           }),
         ),
     );
+  }
+
+  async convertExcelToOdkForm(
+    inputFile: string,
+    outputFile: string,
+  ): Promise<boolean> {
+    // Make sure the binary is installed system wide; Ref: https://github.com/XLSForm/pyxform
+    const command = 'xls2xform ' + inputFile + ' ' + outputFile;
+    return await new Promise(function (resolve, reject) {
+      exec(command, (error) => {
+        if (error) {
+          console.log(error);
+          reject(false);
+          return;
+        }
+        resolve(true);
+      });
+    })
+      .then((success: boolean) => {
+        return success;
+      })
+      .catch((failed: boolean) => {
+        return failed;
+      });
   }
 }
