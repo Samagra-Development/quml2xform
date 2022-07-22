@@ -1,13 +1,13 @@
-import { Controller, Post, Body} from '@nestjs/common';
-import { QuestionBankFilterDto } from './dto/question-bank-filter.dto';
-import { QuestionBankService } from './fetch-question-bank/question-bank.service';
+import { Controller, Post, Body } from '@nestjs/common';
+import { GenerateFormDto } from './dto/generate-form.dto';
+import { QumlToOdkService } from './quml-to-odk.service';
 
 @Controller('quml-to-odk')
 export class QumlToOdkController {
-  constructor(private readonly questionBankService: QuestionBankService) {}
+  constructor(private readonly service: QumlToOdkService) {}
 
   @Post()
-  create(@Body() createQumlToOdkDto: QuestionBankFilterDto): any {
-    return this.questionBankService.fetch(createQumlToOdkDto);
+  create(@Body() createQumlToOdkDto: GenerateFormDto): any {
+    return this.service.fetchQuestions(createQumlToOdkDto);
   }
 }

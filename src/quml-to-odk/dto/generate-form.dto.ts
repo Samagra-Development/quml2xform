@@ -1,6 +1,6 @@
-import { IsArray, IsNotEmpty, IsNumber } from "class-validator";
+import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
 
-export class QuestionBankFilterDto {
+export class GenerateFormDto {
   @IsArray()
   @IsNotEmpty()
   public boards: string;
