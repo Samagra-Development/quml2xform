@@ -7,7 +7,7 @@ export class QumlToOdkController {
   constructor(private readonly service: QumlToOdkService) {}
 
   @Post()
-  create(@Body() createQumlToOdkDto: GenerateFormDto): any {
-    return this.service.fetchQuestions(createQumlToOdkDto);
+  public generate(@Body() createQumlToOdkDto: GenerateFormDto): any {
+    return this.service.generate(createQumlToOdkDto);
   }
 }
