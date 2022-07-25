@@ -398,7 +398,7 @@ export class QumlToOdkService {
   private static cleanHtml(str: string, nbspAsLineBreak = false) {
     // Remove HTML characters since we are not converting HTML to PDF.
     return str
-      .replace(/<[^>]+>/g, '')
+      .replace(/<\/?(?!\bstrong\b)\b\w+\b>/g, '')
       .replace(/&nbsp;/g, nbspAsLineBreak ? '\n' : '');
   }
 }
