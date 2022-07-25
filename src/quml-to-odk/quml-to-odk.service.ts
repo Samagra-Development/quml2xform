@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GenerateFormDto } from './dto/generate-form.dto';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, map } from 'rxjs';
@@ -15,6 +15,8 @@ export class QumlToOdkService {
   private readonly odkFormsPath: string;
 
   private templateFileName: string; // name of the template form files being generated
+
+  private readonly logger = new Logger(QumlToOdkService.name); // logger instance
 
   constructor(
     private readonly configService: ConfigService,
@@ -54,7 +56,7 @@ export class QumlToOdkService {
         odkFile: odkFormFile,
       };
     }
-    console.log(
+    this.logger.debug(
       'Please ensure there are questions available for the matching combination',
     );
     return 'Please ensure there are questions available for the matching combination';
@@ -97,7 +99,7 @@ export class QumlToOdkService {
         .map((obj) => {
           return obj.identifier;
         });
-      console.log(
+      this.logger.debug(
         'Random question identifiers from ' +
           '(' +
           filters.randomQuestionsCount +
@@ -108,7 +110,7 @@ export class QumlToOdkService {
       );
     } else {
       // either the API failed or less questions available than the required random count
-      console.log(
+      console.debug(
         'either the API failed or less questions available than the required random count',
       );
     }
