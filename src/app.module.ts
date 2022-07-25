@@ -6,7 +6,15 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [QumlToOdkModule, HttpModule, ConfigModule.forRoot()],
+  imports: [
+    QumlToOdkModule,
+    HttpModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      envFilePath: ['.env.local', '.env'],
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -4,18 +4,33 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, map } from 'rxjs';
 import { exec } from 'child_process';
 import * as XLSX from 'xlsx';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class QumlToOdkService {
   // config file for the variables being used across the service
-  private config = {
-    questionBankUrl: process.env.QUML_ODK_QUESTION_BANK_URL,
-    questionDetailsUrl: process.env.QUML_ODK_QUESTION_BANK_DETAILS_URL,
-    xlsxFilesPath: process.env.QUML_XLSX_FILE_STORAGE_PATH,
-    odkFormsPath: process.env.QUML_ODK_FORM_FILE_STORAGE_PATH,
-  };
+  private readonly questionBankUrl: string;
+  private readonly questionDetailsUrl: string;
+  private readonly xlsxFilesPath: string;
+  private readonly odkFormsPath: string;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
+  ) {
+    this.questionBankUrl = configService.get<string>(
+      'QUML_ODK_QUESTION_BANK_URL',
+    );
+    this.questionDetailsUrl = configService.get<string>(
+      'QUML_ODK_QUESTION_BANK_DETAILS_URL',
+    );
+    this.xlsxFilesPath = configService.get<string>(
+      'QUML_XLSX_FILE_STORAGE_PATH',
+    );
+    this.odkFormsPath = configService.get<string>(
+      'QUML_ODK_FORM_FILE_STORAGE_PATH',
+    );
+  }
 
   public async generate(filters: GenerateFormDto) {
     const questions = await this.fetchQuestions(filters);
@@ -29,7 +44,7 @@ export class QumlToOdkService {
       );
 
       const odkFormName = +new Date() + '.xml';
-      const odkFormFile = this.config.odkFormsPath + '/' + odkFormName;
+      const odkFormFile = this.odkFormsPath + '/' + odkFormName;
       await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile);
       return {
         xlsxFile: xlsxFormFile,
@@ -57,7 +72,7 @@ export class QumlToOdkService {
 
     const response = await lastValueFrom(
       this.httpService
-        .post(this.config.questionBankUrl, requestBody, {
+        .post(this.questionBankUrl, requestBody, {
           headers: { 'Content-Type': 'application/json' },
         })
         .pipe(
@@ -106,7 +121,7 @@ export class QumlToOdkService {
     return lastValueFrom(
       this.httpService
         .post(
-          this.config.questionDetailsUrl,
+          this.questionDetailsUrl,
           {
             request: {
               search: {
@@ -379,7 +394,7 @@ export class QumlToOdkService {
     settingsSheetArray: Array<any>,
   ): string {
     const filename = +new Date() + '.xlsx';
-    const file = this.config.xlsxFilesPath + '/' + filename;
+    const file = this.xlsxFilesPath + '/' + filename;
 
     const workbook = XLSX.utils.book_new();
     const surveySheet = XLSX.utils.aoa_to_sheet(surveySheetArray);
