@@ -209,7 +209,12 @@ export class QumlToOdkService {
     const optionsMap = ['a', 'b', 'c', 'd'];
     const optionRowsArray = [];
     questions.result.questions.forEach((question) => {
-      const itemName = 'ques_' + filters.subjects[0] + '_' + index;
+      const itemName = (
+        'ques_' +
+        filters.subjects[0] +
+        '_' +
+        index
+      ).toLowerCase();
       const itemType = 'select_one ' + itemName;
       const itemLabel = QumlToOdkService.cleanHtml(
         question.editorState.question,
