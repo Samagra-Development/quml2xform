@@ -32,8 +32,8 @@ export class QumlToOdkService {
       const odkFormFile = this.config.odkFormsPath + '/' + odkFormName;
       await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile);
       return {
-        xlsx_file: xlsxFormFile,
-        odk_file: odkFormFile,
+        xlsxFile: xlsxFormFile,
+        odkFile: odkFormFile,
       };
     }
     console.log(
@@ -89,9 +89,9 @@ export class QumlToOdkService {
           questionIdentifiers,
       );
     } else {
-      // either the API failed or less questions available then the required random count
+      // either the API failed or less questions available than the required random count
       console.log(
-        'either the API failed or less questions available then the required random count',
+        'either the API failed or less questions available than the required random count',
       );
     }
 
