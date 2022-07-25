@@ -5,14 +5,16 @@ import { lastValueFrom, map } from 'rxjs';
 import { exec } from 'child_process';
 import * as XLSX from 'xlsx';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class QumlToOdkService {
-  // config file for the variables being used across the service
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
   private readonly xlsxFilesPath: string;
   private readonly odkFormsPath: string;
+
+  private templateFileName: string; // name of the template form files being generated
 
   constructor(
     private readonly configService: ConfigService,
@@ -35,6 +37,7 @@ export class QumlToOdkService {
   public async generate(filters: GenerateFormDto) {
     const questions = await this.fetchQuestions(filters);
     if (questions.result && questions.result.count) {
+      this.templateFileName = uuid(); // initialize the template name
       const parsedResult = this.parseQuestionsForXslxForm(questions, filters);
       const xlsxFormFile = this.createXslx(
         parsedResult[0],
@@ -43,7 +46,7 @@ export class QumlToOdkService {
         parsedResult[3],
       );
 
-      const odkFormName = +new Date() + '.xml';
+      const odkFormName = this.templateFileName + '.xml';
       const odkFormFile = this.odkFormsPath + '/' + odkFormName;
       await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile);
       return {
@@ -393,7 +396,7 @@ export class QumlToOdkService {
     mediaSheetArray: Array<any>,
     settingsSheetArray: Array<any>,
   ): string {
-    const filename = +new Date() + '.xlsx';
+    const filename = this.templateFileName + '.xlsx';
     const file = this.xlsxFilesPath + '/' + filename;
 
     const workbook = XLSX.utils.book_new();
