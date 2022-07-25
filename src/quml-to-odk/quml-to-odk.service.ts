@@ -211,7 +211,9 @@ export class QumlToOdkService {
     questions.result.questions.forEach((question) => {
       const itemName = 'ques_' + filters.subjects[0] + '_' + index;
       const itemType = 'select_one ' + itemName;
-      const itemLabel = question.editorState.question;
+      const itemLabel = QumlToOdkService.cleanHtml(
+        question.editorState.question,
+      );
       const itemRequired = 'yes';
       const itemConstraint = '';
       const itemConstraintMessage = '';
@@ -243,7 +245,11 @@ export class QumlToOdkService {
         if (option.answer) {
           correctOption = optionsMap[i];
         }
-        choicesSheetArray.push([itemName, optionsMap[i], option.value.body]); // populate choices sheet
+        choicesSheetArray.push([
+          itemName,
+          optionsMap[i],
+          QumlToOdkService.cleanHtml(option.value.body),
+        ]); // populate choices sheet
       }
       const optionItemName = itemName + '_ans';
       totalMarksCellArray.push('${' + optionItemName + '}');
@@ -382,5 +388,12 @@ export class QumlToOdkService {
     XLSX.writeFileXLSX(workbook, file, { bookType: 'xlsx', type: 'file' });
 
     return file;
+  }
+
+  private static cleanHtml(str: string, nbspAsLineBreak = false) {
+    // Remove HTML characters since we are not converting HTML to PDF.
+    return str
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, nbspAsLineBreak ? '\n' : '');
   }
 }
