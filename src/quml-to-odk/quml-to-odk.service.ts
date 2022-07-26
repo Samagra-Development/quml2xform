@@ -6,6 +6,7 @@ import { exec } from 'child_process';
 import * as XLSX from 'xlsx';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
+import { FormService } from './form.service';
 
 @Injectable()
 export class QumlToOdkService {
@@ -21,6 +22,7 @@ export class QumlToOdkService {
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly formService: FormService,
   ) {
     this.questionBankUrl = configService.get<string>(
       'QUML_ODK_QUESTION_BANK_URL',
@@ -51,6 +53,7 @@ export class QumlToOdkService {
       const odkFormName = this.templateFileName + '.xml';
       const odkFormFile = this.odkFormsPath + '/' + odkFormName;
       await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile);
+      console.log(await this.formService.uploadForm(odkFormFile));
       return {
         xlsxFile: xlsxFormFile,
         odkFile: odkFormFile,
