@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-// import { TelemetryService } from './telemetry.service';
-import fetch from 'node-fetch';
-import digestAuthRequest from './digestAuthRequest';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import fetch from "node-fetch";
+import digestAuthRequest from "./digestAuthRequest";
+import { ODK as ODKMessages, PROGRAM as ProgramMessages } from "./messages";
+import parser from "xml2json";
+import { FormUploadStatus } from "./form.types";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const FormData = require('form-data');
-import { ODK as ODKMessages, PROGRAM as ProgramMessages } from './messages';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs');
-import parser from 'xml2json';
-import { FormUploadStatus } from './form.types';
 
+/**
+ * The service codes taken from here: https://github.com/samagra-comms/uci-apis/blob/v2/v2/uci/src/modules/form/form.service.ts
+ */
 @Injectable()
 export class FormService {
   odkClient: any;
@@ -37,7 +39,7 @@ export class FormService {
       this.configService.get<string>('ODK_USERNAME'),
       this.configService.get<string>('ODK_PASSWORD'),
       {
-        timeout: 5000,
+        timeout: 30000,
         loggingOn: false,
       },
     );
@@ -56,14 +58,12 @@ export class FormService {
   }
 
   async uploadForm(formFilePath: string): Promise<FormUploadStatus> {
-    console.log(3);
     const filename = formFilePath.split('/').slice(-1)[0];
     return this.odkClient.request(
       async function (data): Promise<FormUploadStatus> {
         const formData = new FormData();
         const file = fs.createReadStream(formFilePath);
         formData.append('form_def_file', file, filename);
-        console.log(2);
         const requestOptions = {
           method: 'POST',
           headers: {
@@ -71,17 +71,14 @@ export class FormService {
           },
           body: formData,
         };
-        console.log(1);
-        const d: FormUploadStatus = await fetch(
-          this.extras.ODK_FORM_UPLOAD_URL,
-          requestOptions,
-        )
+        return await fetch(this.extras.ODK_FORM_UPLOAD_URL, requestOptions)
           .then((response) => response.text())
           .then(async (result): Promise<FormUploadStatus> => {
             if (result.includes('Successful form upload.')) {
-              await fetch(this.extras.TRANSFORMER_BASE_URL)
+              // below snippet is not needed to be called
+              /*await fetch(this.extras.TRANSFORMER_BASE_URL)
                 .then(console.log)
-                .catch(console.log);
+                .catch(console.log);*/
               const data = fs.readFileSync(formFilePath);
               try {
                 const formDef = JSON.parse(parser.toJson(data.toString()));
@@ -128,7 +125,6 @@ export class FormService {
               data: {},
             };
           });
-        return d;
       },
       function (errorCode): FormUploadStatus {
         console.log({ errorCode });

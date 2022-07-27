@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
 import { McqParserService } from './services/mcq-parser.service';
 import { QuestionTypesEnum } from './enums/question-types.enum';
-import { FormService } from './form.service';
+import { FormService } from './form-upload/form.service';
 
 @Injectable()
 export class QumlToOdkService {

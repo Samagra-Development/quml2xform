@@ -11,7 +11,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 
-import CryptoJS from 'crypto-js';
+import * as CryptoJS from 'crypto-js';
 
 const digestAuthRequest = function (
   method,
