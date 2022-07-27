@@ -30,6 +30,7 @@ describe('AppController (e2e)', () => {
       grades: ['Class 6'],
       subjects: ['Mathematics'],
       competencies: ['Data Handling'],
+      qType: 'MCQ',
     };
     return request(app.getHttpServer())
       .post('/quml-to-odk')
