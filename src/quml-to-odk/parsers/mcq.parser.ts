@@ -1,10 +1,8 @@
-import { Injectable} from '@nestjs/common';
 import { GenerateFormDto } from '../dto/generate-form.dto';
 import { QumlToOdkService } from '../quml-to-odk.service';
 import * as XLSX from 'xlsx';
 
-@Injectable()
-export class McqParserService {
+export class McqParser {
   /**
    * Prepares the XSLX form sheets data as per the provided template file: https://docs.google.com/spreadsheets/d/1GIcHghGYUR1FZ31BD-LCXBNMzr1xdCmQ/edit#gid=1148196142
    *

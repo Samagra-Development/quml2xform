@@ -1,11 +1,16 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotImplementedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { GenerateFormDto } from './dto/generate-form.dto';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, map } from 'rxjs';
 import { exec } from 'child_process';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
-import { McqParserService } from './services/mcq-parser.service';
+import { McqParser } from './parsers/mcq.parser';
 import { QuestionTypesEnum } from './enums/question-types.enum';
 import { FormService } from './form-upload/form.service';
 
@@ -38,6 +43,7 @@ export class QumlToOdkService {
   }
 
   public async generate(filters: GenerateFormDto) {
+    this.logger.debug('Fetching questions..');
     const questions = await this.fetchQuestions(filters);
     if (questions.result && questions.result.count) {
       const templateFileName = uuid(); // initialize the template name
@@ -46,30 +52,37 @@ export class QumlToOdkService {
       // based on question type, we'll use different parsers
       switch (filters.qType) {
         case QuestionTypesEnum.MCQ:
-          service = new McqParserService(); // create the instance
+          service = new McqParser(); // create the instance
           break;
         default:
-          throw BadRequestException; // ideally this part should be handled at validation level itself
+          throw new NotImplementedException(
+            'Service not implemented',
+            "Parser for the given question type isn't available.",
+          ); // ideally this part should be handled at validation level itself
       }
 
+      this.logger.debug('Generating XSLX form..');
       const xlsxFormFile = service.createForm(
         questions,
         filters,
         this.xlsxFilesPath + '/' + templateFileName + '.xlsx',
       );
 
+      this.logger.debug('Generating ODK form..');
       const odkFormFile = this.odkFormsPath + '/' + templateFileName + '.xml';
       await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile);
+
+      this.logger.debug('Uploading form..');
       console.log(await this.formService.uploadForm(odkFormFile));
       return {
         xlsxFile: xlsxFormFile,
         odkFile: odkFormFile,
       };
     }
-    this.logger.debug(
-      'Please ensure there are questions available for the matching combination',
+    throw new UnprocessableEntityException(
+      'Questions not available.',
+      'Please ensure there are questions available for the matching combination.',
     );
-    return 'Please ensure there are questions available for the matching combination';
   }
 
   private async fetchQuestions(filters: GenerateFormDto): Promise<any> {
@@ -110,19 +123,17 @@ export class QumlToOdkService {
           return obj.identifier;
         });
       this.logger.debug(
-        'Random question identifiers from ' +
+        'Questions fetched ' +
           '(' +
           filters.randomQuestionsCount +
           '/' +
           response.result.count +
-          '):\n' +
+          '): ' +
           questionIdentifiers,
       );
     } else {
       // either the API failed or less questions available than the required random count
-      console.debug(
-        'either the API failed or less questions available than the required random count',
-      );
+      this.logger.debug('Requested questions count is not available!!');
     }
 
     let questions = [];
