@@ -1,10 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import fetch from "node-fetch";
-import digestAuthRequest from "./digestAuthRequest";
-import { ODK as ODKMessages, PROGRAM as ProgramMessages } from "./messages";
-import parser from "xml2json";
-import { FormUploadStatus } from "./form.types";
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import fetch from 'node-fetch';
+import digestAuthRequest from './digestAuthRequest';
+import { ODK as ODKMessages, PROGRAM as ProgramMessages } from './messages';
+import parser from 'xml2json';
+import { FormUploadStatus } from './form.types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const FormData = require('form-data');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -82,7 +82,7 @@ export class FormService {
               const data = fs.readFileSync(formFilePath);
               try {
                 const formDef = JSON.parse(parser.toJson(data.toString()));
-                let formID = '';
+                let formID: string;
                 if (Array.isArray(formDef['h:html']['h:head'].model.instance)) {
                   formID =
                     formDef['h:html']['h:head'].model.instance[0].data.id;
