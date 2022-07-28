@@ -1,5 +1,6 @@
 import {
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotImplementedException,
   UnprocessableEntityException,
@@ -70,10 +71,12 @@ export class QumlToOdkService {
 
       this.logger.debug('Generating ODK form..');
       const odkFormFile = this.odkFormsPath + '/' + templateFileName + '.xml';
-      await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile);
+      if (!(await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile))) {
+        throw new InternalServerErrorException('Form generation failed.');
+      }
 
-      this.logger.debug('Uploading form..');
-      console.log(await this.formService.uploadForm(odkFormFile));
+      // this.logger.debug('Uploading form..');
+      this.logger.debug(await this.formService.uploadForm(odkFormFile));
       return {
         xlsxFile: xlsxFormFile,
         odkFile: odkFormFile,

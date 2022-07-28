@@ -36,8 +36,14 @@ export class McqParser {
     const choicesSheetArray = [choicesSheetHeader];
     const settingsSheetArray = [settingsSheetHeader];
     let name =
-      filters.boards[0] + '_' + filters.grades[0] + '_' + filters.subjects[0];
-    name = name.replace(' ', '_').toLowerCase();
+      filters.boards[0] +
+      '_' +
+      filters.grades.join('_') +
+      '_' +
+      filters.subjects.join('_');
+    name = name
+      .replace(/[^a-zA-Z0-9\\s]/g, '_') // remove any white space
+      .toLowerCase();
     surveySheetArray.push([
       'begin group',
       name,
