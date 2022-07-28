@@ -14,6 +14,7 @@ import { v4 as uuid } from 'uuid';
 import { McqParser } from './parsers/mcq.parser';
 import { QuestionTypesEnum } from './enums/question-types.enum';
 import { FormService } from './form-upload/form.service';
+import * as striptags from 'striptags';
 
 @Injectable()
 export class QumlToOdkService {
@@ -196,9 +197,11 @@ export class QumlToOdkService {
   }
 
   public static cleanHtml(str: string, nbspAsLineBreak = false) {
-    // Remove HTML characters since we are not converting HTML to PDF.
+    // Remove HTML tags
+    str = striptags(str, ['strong']); // allow strong tag
     return str
-      .replace(/<\/?(?!\bstrong\b)\b\w+\b>/g, '')
-      .replace(/&nbsp;/g, nbspAsLineBreak ? '\n' : '');
+      .replace(/&nbsp;/g, nbspAsLineBreak ? '\n' : '')
+      .replace(/&gt;/g, '>') // parsing for > symbol
+      .replace(/&lt;/g, '<'); // parsing for < symbol
   }
 }

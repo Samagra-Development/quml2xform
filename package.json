@@ -35,6 +35,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
+    "striptags": "^3.2.0",
     "uuid": "^8.3.2",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.18.9/xlsx-0.18.9.tgz",
     "xml2json": "^0.12.0",
