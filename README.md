@@ -39,6 +39,7 @@ POST {{url}}/quml-to-odk
     "subjects": ["Mathematics"],
     "competencies": [
         "Data Handling"
-    ]
+    ],
+    "qType": "MCQ"
 }
 ```
