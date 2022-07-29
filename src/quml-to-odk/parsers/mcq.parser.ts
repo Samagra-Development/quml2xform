@@ -12,6 +12,7 @@ export class McqParser {
    * @return Array arrays of arrays for all the 4 sheets as mentioned in sample
    */
   private parseQuestions(questions, filters: GenerateFormDto): Array<any> {
+    const imagePathsArray = [];
     const surveySheetHeader = [
       'type',
       'name',
@@ -24,9 +25,9 @@ export class McqParser {
       'choice_filter',
       'appearance',
       'calculation',
-      'image',
+      'media::image',
     ];
-    const choicesSheetHeader = ['list name', 'name', 'label'];
+    const choicesSheetHeader = ['list name', 'name', 'label', 'media::image'];
     const settingsSheetHeader = [
       'form_title',
       'form_id',
@@ -84,7 +85,21 @@ export class McqParser {
       const itemChoiceFilter = '';
       const itemAppearance = '';
       const itemCalculation = '';
-      const itemImage = ''; // todo set for image
+      let itemImage = '';
+
+      // checking if there is an image in option
+      let questionImage;
+      if (
+        (questionImage = QumlToOdkService.findImageFromBody(
+          question.editorState.question,
+        )) !== null
+      ) {
+        const questionImageObject = QumlToOdkService.saveImage(questionImage);
+        if (questionImageObject.path) {
+          imagePathsArray.push(questionImageObject.path); // push the path in array
+          itemImage = questionImageObject.name;
+        }
+      }
       surveySheetArray.push([
         itemType,
         itemName,
@@ -107,10 +122,25 @@ export class McqParser {
         if (option.answer) {
           correctOption = optionsMap[i];
         }
+        // checking if there is an image in option
+        let optionImage = '';
+        if (
+          (optionImage = QumlToOdkService.findImageFromBody(
+            option.value.body,
+          )) !== null
+        ) {
+          const optionImageObject = QumlToOdkService.saveImage(optionImage);
+          if (optionImageObject.path) {
+            imagePathsArray.push(optionImageObject.path); // push the path in array
+            optionImage = optionImageObject.name;
+          }
+        }
+
         choicesSheetArray.push([
           itemName,
           optionsMap[i],
           QumlToOdkService.cleanHtml(option.value.body),
+          optionImage,
         ]); // populate choices sheet
       }
       const optionItemName = itemName + '_ans';
@@ -243,7 +273,13 @@ export class McqParser {
       Math.floor(Date.now() / 1000).toString(),
     ]);
 
-    return [surveySheetArray, choicesSheetArray, [], settingsSheetArray];
+    return [
+      surveySheetArray,
+      choicesSheetArray,
+      [],
+      settingsSheetArray,
+      imagePathsArray,
+    ];
   }
 
   /**
@@ -257,12 +293,13 @@ export class McqParser {
     questions,
     filters: GenerateFormDto,
     filepath: string,
-  ): string {
+  ): Array<string> {
     const data = this.parseQuestions(questions, filters);
     const surveySheetArray = data[0];
     const choicesSheetArray = data[1];
     const mediaSheetArray = data[2];
     const settingsSheetArray = data[3];
+    const imagesArray = data[4];
 
     const workbook = XLSX.utils.book_new();
     const surveySheet = XLSX.utils.aoa_to_sheet(surveySheetArray);
@@ -275,6 +312,6 @@ export class McqParser {
     XLSX.utils.book_append_sheet(workbook, settingsSheet, 'settings');
     XLSX.writeFileXLSX(workbook, filepath, { bookType: 'xlsx', type: 'file' });
 
-    return filepath;
+    return [filepath, imagesArray];
   }
 }

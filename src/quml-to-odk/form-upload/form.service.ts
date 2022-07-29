@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch';
 import digestAuthRequest from './digestAuthRequest';
 import { ODK as ODKMessages, PROGRAM as ProgramMessages } from './messages';
-import parser from 'xml2json';
 import { FormUploadStatus } from './form.types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const FormData = require('form-data');
@@ -76,7 +75,12 @@ export class FormService {
         // Add images
         if (imagesFilePaths.length > 0) {
           for (let i = 0; i < imagesFilePaths.length; i++) {
-            formData.append('mediaFiles', file, filename(imagesFilePaths[i]));
+            const imageFile = fs.createReadStream(imagesFilePaths[i]);
+            formData.append(
+              'mediaFiles',
+              imageFile,
+              filename(imagesFilePaths[i]),
+            );
           }
         }
         const requestOptions = {

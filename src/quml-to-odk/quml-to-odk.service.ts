@@ -14,6 +14,8 @@ import { v4 as uuid } from 'uuid';
 import { McqParser } from './parsers/mcq.parser';
 import { QuestionTypesEnum } from './enums/question-types.enum';
 import { FormService } from './form-upload/form.service';
+import * as https from 'https';
+import * as fs from 'fs';
 import * as striptags from 'striptags';
 
 @Injectable()
@@ -56,11 +58,13 @@ export class QumlToOdkService {
       }
 
       this.logger.debug('Generating XSLX form..');
-      const xlsxFormFile = service.createForm(
+      const form = service.createForm(
         questions,
         filters,
         './gen/xlsx/' + templateFileName + '.xlsx',
       );
+      const xlsxFormFile = form[0];
+      const formImageFiles = form[1];
 
       this.logger.debug('Generating ODK form..');
       const odkFormFile = './gen/xml/' + templateFileName + '.xml';
@@ -68,8 +72,11 @@ export class QumlToOdkService {
         throw new InternalServerErrorException('Form generation failed.');
       }
 
-      this.logger.debug('Uploading form..');
-      const response = await this.formService.uploadForm(odkFormFile, []);
+      this.logger.debug('Uploading form.. Image files:', formImageFiles);
+      const response = await this.formService.uploadForm(
+        odkFormFile,
+        formImageFiles,
+      );
       this.logger.debug(response);
       return {
         xlsxFile: xlsxFormFile,
@@ -110,7 +117,7 @@ export class QumlToOdkService {
 
     let questionIdentifiers = [];
     // if there are questions available and requested random questions count is > available questions from question bank
-    if (response.result.count > filters.randomQuestionsCount) {
+    if (response.result.count >= filters.randomQuestionsCount) {
       // let's sort the available questions in random order
       const randomQuestionsList = response.result.Question.sort(
         () => Math.random() - 0.5,
@@ -174,7 +181,7 @@ export class QumlToOdkService {
     return await new Promise(function (resolve, reject) {
       exec(command, (error) => {
         if (error) {
-          console.log(error);
+          console.log('Error generating ODK form: ', error);
           reject(false);
           return;
         }
@@ -196,5 +203,51 @@ export class QumlToOdkService {
       .replace(/&nbsp;/g, nbspAsLineBreak ? '\n' : '')
       .replace(/&gt;/g, '>') // parsing for > symbol
       .replace(/&lt;/g, '<'); // parsing for < symbol
+  }
+
+  public static findImageFromBody(body: string): any {
+    // check if there is directly an image URL
+    const regex = /<img[^>]+src="([^">]+)"/g;
+    let matches;
+    let src = null;
+    if ((matches = regex.exec(body)) !== null) {
+      src = matches[1] ? matches[1] : null;
+    }
+    return src;
+  }
+
+  /**
+   * Returns null or an object containing image path & name
+   * @param image
+   */
+  public static saveImage(image: string) {
+    let imagePath = null;
+    let imageName = null;
+    const templateName = uuid();
+    try {
+      if (image.substring(0, 10) === 'data:image') {
+        const base64Data = image.split('base64,')[1];
+        const extension = image.split(';')[0].split('/')[1];
+        imageName = `${templateName}.${extension}`;
+        imagePath = `./gen/images/${templateName}.${extension}`;
+        fs.writeFile(imagePath, base64Data, 'base64', function (err) {
+          if (err) {
+            console.log('Error writing image file (1): ', err);
+          }
+        });
+      } else {
+        const extension = image.split('.').slice(-1)[0];
+        imageName = `${templateName}.${extension}`;
+        imagePath = `./gen/images/${templateName}.${extension}`;
+        https.get(image, (resp) => resp.pipe(fs.createWriteStream(imagePath)));
+      }
+    } catch (e) {
+      console.log('Error writing image file (2): ', e);
+    }
+
+    return {
+      path: imagePath,
+      name: imageName,
+    };
   }
 }
