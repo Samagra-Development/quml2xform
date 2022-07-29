@@ -20,8 +20,6 @@ import * as striptags from 'striptags';
 export class QumlToOdkService {
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
-  private readonly xlsxFilesPath: string;
-  private readonly odkFormsPath: string;
 
   private readonly logger = new Logger(QumlToOdkService.name); // logger instance
 
@@ -35,12 +33,6 @@ export class QumlToOdkService {
     );
     this.questionDetailsUrl = configService.get<string>(
       'QUML_ODK_QUESTION_BANK_DETAILS_URL',
-    );
-    this.xlsxFilesPath = configService.get<string>(
-      'QUML_XLSX_FILE_STORAGE_PATH',
-    );
-    this.odkFormsPath = configService.get<string>(
-      'QUML_ODK_FORM_FILE_STORAGE_PATH',
     );
   }
 
@@ -67,11 +59,11 @@ export class QumlToOdkService {
       const xlsxFormFile = service.createForm(
         questions,
         filters,
-        this.xlsxFilesPath + '/' + templateFileName + '.xlsx',
+        './gen/xlsx/' + templateFileName + '.xlsx',
       );
 
       this.logger.debug('Generating ODK form..');
-      const odkFormFile = this.odkFormsPath + '/' + templateFileName + '.xml';
+      const odkFormFile = './gen/xml/' + templateFileName + '.xml';
       if (!(await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile))) {
         throw new InternalServerErrorException('Form generation failed.');
       }
