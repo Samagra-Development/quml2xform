@@ -7,7 +7,7 @@ QuML to ODK form conversion tool written in [Nest](https://github.com/nestjs/nes
 ## Installation
 
 ```bash
-$ npm install
+$ yarn install
 ```
 
 ## Running the app
@@ -16,13 +16,13 @@ Create `.env` file (can be copied from `.env.example`) and configure all the var
 
 ```bash
 # development
-$ npm run start
+$ yarn run start
 
 # watch mode
-$ npm run start:dev
+$ yarn run start:dev
 
 # production mode
-$ npm run start:prod
+$ yarn run start:prod
 ```
 
 Make sure the python tool is installed system wide: https://github.com/XLSForm/pyxform#running-the-latest-release-of-pyxform. We are using this tool to generate XML from XLSX form using command line utility available from the tool:
@@ -43,3 +43,8 @@ POST {{url}}/quml-to-odk
     "qType": "MCQ"
 }
 ```
+
+## Generated Files
+- XLSX files will be generated at path: `./gen/xlsx`
+- XML files will be generated at path: `./gen/xml`
+- Image files will be generated at path: `./gen/images`
