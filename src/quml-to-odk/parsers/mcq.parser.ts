@@ -215,9 +215,30 @@ export class McqParser {
       ['today', 'today', '', '', '', '', '', '', '', '', '', ''],
     ]);
 
+    /**
+     * Form ID logic: Grade_<grade_value>Subject<subject_name>_<serial_number>
+     *   where serial_number === current date_hour_minute
+     *   e.g. Class_6_Mathematics_297202220428
+     */
+    let formId =
+      filters.grades[0].replace(/[^a-zA-Z0-9\\s]/g, '_') +
+      '_' +
+      filters.subjects[0].replace(/[^a-zA-Z0-9\\s]/g, '_');
+    const currDate = new Date().toLocaleString();
+    formId =
+      formId.toLowerCase() +
+      '_' +
+      currDate
+        .replace(/[^a-zA-Z0-9\\s]/g, '') // remove any white space
+        .replace(':', '')
+        .replace('pm', '')
+        .replace('PM', '')
+        .replace('AM', '')
+        .replace('am', '')
+        .toLowerCase();
     settingsSheetArray.push([
       name,
-      'g2m_w10',
+      formId,
       'no',
       Math.floor(Date.now() / 1000).toString(),
     ]);
