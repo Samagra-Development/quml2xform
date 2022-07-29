@@ -82,6 +82,7 @@ export class QumlToOdkService {
       return {
         xlsxFile: xlsxFormFile,
         odkFile: odkFormFile,
+        formUploadResponse: response,
       };
     }
     throw new UnprocessableEntityException(
