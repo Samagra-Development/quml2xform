@@ -75,8 +75,9 @@ export class QumlToOdkService {
         throw new InternalServerErrorException('Form generation failed.');
       }
 
-      // this.logger.debug('Uploading form..');
-      this.logger.debug(await this.formService.uploadForm(odkFormFile));
+      this.logger.debug('Uploading form..');
+      const response = await this.formService.uploadForm(odkFormFile, []);
+      this.logger.debug(response);
       return {
         xlsxFile: xlsxFormFile,
         odkFile: odkFormFile,
