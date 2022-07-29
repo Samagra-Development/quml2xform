@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch';
 import digestAuthRequest from './digestAuthRequest';
@@ -15,6 +15,7 @@ const fs = require('fs');
  */
 @Injectable()
 export class FormService {
+  private readonly logger = new Logger(FormService.name);
   odkClient: any;
   ODK_FILTER_URL: string;
   ODK_FORM_UPLOAD_URL: string;
@@ -57,13 +58,27 @@ export class FormService {
     );
   }
 
-  async uploadForm(formFilePath: string): Promise<FormUploadStatus> {
-    const filename = formFilePath.split('/').slice(-1)[0];
+  async uploadForm(
+    formFilePath: string,
+    imagesFilePaths: string[],
+  ): Promise<FormUploadStatus> {
+    //TODO: Check total size of images + file should be less than 10MB
+    const filename = (formFilePath) => formFilePath.split('/').slice(-1)[0];
+    this.logger.debug(`filename ${filename}`);
     return this.odkClient.request(
       async function (data): Promise<FormUploadStatus> {
         const formData = new FormData();
         const file = fs.createReadStream(formFilePath);
-        formData.append('form_def_file', file, filename);
+
+        // Add file
+        formData.append('form_def_file', file, filename(formFilePath));
+
+        // Add images
+        if (imagesFilePaths.length > 0) {
+          for (let i = 0; i < imagesFilePaths.length; i++) {
+            formData.append('mediaFiles', file, filename(imagesFilePaths[i]));
+          }
+        }
         const requestOptions = {
           method: 'POST',
           headers: {
@@ -75,12 +90,10 @@ export class FormService {
           .then((response) => response.text())
           .then(async (result): Promise<FormUploadStatus> => {
             if (result.includes('Successful form upload.')) {
-              // below snippet is not needed to be called
-              /*await fetch(this.extras.TRANSFORMER_BASE_URL)
-                .then(console.log)
-                .catch(console.log);*/
               const data = fs.readFileSync(formFilePath);
               try {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const parser = require('xml2json');
                 const formDef = JSON.parse(parser.toJson(data.toString()));
                 let formID: string;
                 if (Array.isArray(formDef['h:html']['h:head'].model.instance)) {
@@ -96,6 +109,7 @@ export class FormService {
                   },
                 };
               } catch (e) {
+                console.log(e);
                 const checkPoint = 'CP-1';
                 return {
                   status: 'ERROR',
@@ -107,6 +121,7 @@ export class FormService {
               }
             } else {
               const checkPoint = 'CP-2';
+              console.log(result);
               return {
                 status: 'ERROR',
                 errorCode: ODKMessages.UPLOAD.EXCEPTION_CODE + '-' + checkPoint,

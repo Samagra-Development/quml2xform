@@ -31,6 +31,7 @@ export class McqParser {
       'form_title',
       'form_id',
       'allow_choice_duplicates',
+      'version',
     ];
     let surveySheetArray = [surveySheetHeader];
     const choicesSheetArray = [choicesSheetHeader];
@@ -214,7 +215,12 @@ export class McqParser {
       ['today', 'today', '', '', '', '', '', '', '', '', '', ''],
     ]);
 
-    settingsSheetArray.push([name, 'g2m_w1', 'no']);
+    settingsSheetArray.push([
+      name,
+      'g2m_w10',
+      'no',
+      Math.floor(Date.now() / 1000).toString(),
+    ]);
 
     return [surveySheetArray, choicesSheetArray, [], settingsSheetArray];
   }
