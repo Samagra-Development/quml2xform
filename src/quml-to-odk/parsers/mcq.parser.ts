@@ -74,9 +74,11 @@ export class McqParser {
         index
       ).toLowerCase();
       const itemType = 'select_one ' + itemName;
-      const itemLabel = QumlToOdkService.cleanHtml(
-        question.editorState.question,
-      );
+      let itemLabel = QumlToOdkService.cleanHtml(question.editorState.question);
+      if (itemLabel === '') {
+        // if empty, put a dot
+        itemLabel = '.';
+      }
       const itemRequired = 'yes';
       const itemConstraint = '';
       const itemConstraintMessage = '';
@@ -100,6 +102,21 @@ export class McqParser {
           itemImage = questionImageObject.name;
         }
       }
+
+      // checking if there are table(s) in the question body, we replace them with images
+      let questionTables: string[];
+      if (
+        (questionTables = QumlToOdkService.findTablesFromHtml(
+          question.editorState.question,
+        )).length
+      ) {
+        const questionTableImagePath = QumlToOdkService.htmlTableToImage(
+          questionTables.join('<br>'),
+        );
+        itemImage = questionTableImagePath.split('/').slice(-1)[0];
+        imagePathsArray.push(questionTableImagePath); // push to array for upload
+      }
+
       surveySheetArray.push([
         itemType,
         itemName,
@@ -134,6 +151,20 @@ export class McqParser {
             imagePathsArray.push(optionImageObject.path); // push the path in array
             optionImage = optionImageObject.name;
           }
+        }
+
+        // checking if there are table(s) in the option body, we replace them with images
+        let optionTables = [];
+        if (
+          (optionTables = QumlToOdkService.findTablesFromHtml(
+            option.value.body,
+          )).length
+        ) {
+          const optionTableImagePath = QumlToOdkService.htmlTableToImage(
+            optionTables.join('<br>'),
+          );
+          itemImage = optionTableImagePath.split('/').slice(-1)[0];
+          imagePathsArray.push(optionTableImagePath); // push to array for upload
         }
 
         choicesSheetArray.push([

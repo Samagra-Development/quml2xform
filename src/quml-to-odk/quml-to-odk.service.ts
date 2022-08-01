@@ -17,6 +17,7 @@ import { FormService } from './form-upload/form.service';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as striptags from 'striptags';
+import nodeHtmlToImage from 'node-html-to-image';
 
 @Injectable()
 export class QumlToOdkService {
@@ -196,9 +197,17 @@ export class QumlToOdkService {
       });
   }
 
-  public static cleanHtml(str: string, nbspAsLineBreak = false) {
+  public static cleanHtml(
+    str: string,
+    nbspAsLineBreak = false,
+    removeTable = true,
+  ) {
     // Remove HTML tags
-    str = striptags(str, ['strong']); // allow strong tag
+    if (removeTable) {
+      // if passed, we remove the image figure tag; Use case: we are replacing table with Image
+      str = str.replace(/<\s*figure class="table">(.*?)<\s*\/\s*figure>/g, '');
+    }
+    str = striptags(str);
     return str
       .replace(/&nbsp;/g, nbspAsLineBreak ? '\n' : '')
       .replace(/&gt;/g, '>') // parsing for > symbol
@@ -249,5 +258,38 @@ export class QumlToOdkService {
       path: imagePath,
       name: imageName,
     };
+  }
+
+  /**
+   * Find and returns all tables present inside <figure class="table"></figure> tags
+   * @param body
+   * return Array<string>
+   */
+  public static findTablesFromHtml(body: string): Array<string> {
+    const regex = /<\s*figure class="table">(.*?)<\s*\/\s*figure>/g;
+    let matches;
+    const tables = [];
+    while (true) {
+      if ((matches = regex.exec(body)) === null) {
+        // break when nothing found anymore
+        break;
+      }
+      tables.push(matches[1]);
+    }
+    return tables;
+  }
+
+  public static htmlTableToImage(tables: string): string {
+    const name = uuid();
+    const path = `./gen/images/${name}.png`;
+    const html =
+      '<body style="width: 100px;height: 100px;">' + tables + '</body>';
+    nodeHtmlToImage({
+      output: path,
+      html: html,
+      transparent: true,
+      quality: 100,
+    });
+    return path;
   }
 }
