@@ -282,13 +282,12 @@ export class QumlToOdkService {
   public static htmlTableToImage(tables: string): string {
     const name = uuid();
     const path = `./gen/images/${name}.png`;
-    const html =
-      '<body style="width: 100px;height: 100px;">' + tables + '</body>';
     nodeHtmlToImage({
       output: path,
-      html: html,
+      html: tables,
       transparent: true,
       quality: 100,
+      selector: 'table',
     });
     return path;
   }
