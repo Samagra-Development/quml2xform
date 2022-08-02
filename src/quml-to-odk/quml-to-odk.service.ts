@@ -48,8 +48,7 @@ export class QumlToOdkService {
     let errorMsg = '';
     this.logger.debug('Fetching questions..');
     const questions = await this.fetchQuestions(filters);
-    this.logger.debug(questions.result.count);
-    if (questions.result && questions.result.count) {
+    if (questions && questions.result && questions.result.count) {
       let service;
 
       // based on question type, we'll use different parsers

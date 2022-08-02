@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch';
 import digestAuthRequest from './digestAuthRequest';
@@ -14,7 +14,6 @@ const fs = require('fs');
  */
 @Injectable()
 export class FormService {
-  private readonly logger = new Logger(FormService.name);
   odkClient: any;
   ODK_FILTER_URL: string;
   ODK_FORM_UPLOAD_URL: string;
@@ -63,7 +62,6 @@ export class FormService {
   ): Promise<FormUploadStatus> {
     //TODO: Check total size of images + file should be less than 10MB
     const filename = (formFilePath) => formFilePath.split('/').slice(-1)[0];
-    this.logger.debug(`filename ${filename}`);
     return this.odkClient.request(
       async function (data): Promise<FormUploadStatus> {
         const formData = new FormData();
