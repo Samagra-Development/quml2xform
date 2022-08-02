@@ -21,6 +21,7 @@ import nodeHtmlToImage from 'node-html-to-image';
 
 @Injectable()
 export class QumlToOdkService {
+  private readonly maxFormsAllowed: number;
   private readonly baseUrl: string;
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
@@ -39,13 +40,16 @@ export class QumlToOdkService {
     this.questionDetailsUrl = configService.get<string>(
       'QUML_ODK_QUESTION_BANK_DETAILS_URL',
     );
+    this.maxFormsAllowed = configService.get<number>('MAX_FORMS_ALLOWED', 10);
   }
 
   public async generate(filters: GenerateFormDto) {
+    let error = false;
+    let errorMsg = '';
     this.logger.debug('Fetching questions..');
     const questions = await this.fetchQuestions(filters);
+    this.logger.debug(questions.result.count);
     if (questions.result && questions.result.count) {
-      const templateFileName = uuid(); // initialize the template name
       let service;
 
       // based on question type, we'll use different parsers
@@ -60,31 +64,61 @@ export class QumlToOdkService {
           ); // ideally this part should be handled at validation level itself
       }
 
-      this.logger.debug('Generating XSLX form..');
-      const form = await service.createForm(
-        questions,
-        filters,
-        './gen/xlsx/' + templateFileName + '.xlsx',
+      const xlsxFormFiles: Array<string> = [];
+      const odkFormFiles: Array<string> = [];
+      const formIds: Array<string> = [];
+      const formsToGenerate: number = Math.floor(
+        questions.result.count / filters.randomQuestionsCount,
       );
-      const xlsxFormFile = form[0];
-      const formImageFiles = form[1];
+      this.logger.debug('Forms to generate: ', formsToGenerate);
+      for (let i = 0; i < formsToGenerate; i++) {
+        if (i + 1 > this.maxFormsAllowed) {
+          this.logger.log(
+            `Max form generation count is limited to: ${this.maxFormsAllowed}. Stopping..`,
+          );
+          break;
+        }
+        const templateFileName = uuid(); // initialize the template name
+        const formQuestions = questions.result.questions.slice(
+          i * filters.randomQuestionsCount,
+          i * filters.randomQuestionsCount + filters.randomQuestionsCount,
+        );
 
-      this.logger.debug('Generating ODK form..');
-      const odkFormFile = './gen/xml/' + templateFileName + '.xml';
-      if (!(await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile))) {
-        throw new InternalServerErrorException('Form generation failed.');
-      }
+        this.logger.debug(`Generating XSLX form..${i}`);
+        const form = await service.createForm(
+          formQuestions,
+          filters,
+          './gen/xlsx/' + templateFileName + '.xlsx',
+        );
+        const xlsxFormFile = form[0];
+        const formImageFiles = form[1];
 
-      this.logger.debug('Uploading form.. Image files:', formImageFiles);
-      const response = await this.formService.uploadForm(
-        odkFormFile,
-        formImageFiles,
-      );
-      this.logger.debug(response);
+        this.logger.debug(`Generating ODK form..${i}`);
+        const odkFormFile = './gen/xml/' + templateFileName + '.xml';
+        if (!(await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile))) {
+          throw new InternalServerErrorException('Form generation failed.');
+        }
+
+        this.logger.debug(`Uploading form..${i} Image files:`, formImageFiles);
+        const formUploadResponse = await this.formService.uploadForm(
+          odkFormFile,
+          formImageFiles,
+        );
+        if (formUploadResponse.status === 'UPLOADED') {
+          formIds.push(formUploadResponse.data.formID);
+        } else {
+          error = true;
+          errorMsg = 'Form Upload Failed!';
+        }
+        xlsxFormFiles.push(xlsxFormFile);
+        odkFormFiles.push(odkFormFile);
+      } // for() end
       return {
-        xlsxFile: xlsxFormFile,
-        odkFile: odkFormFile,
-        formUploadResponse: response,
+        xlsxFiles: xlsxFormFiles,
+        odkFiles: odkFormFiles,
+        formIds: formIds,
+        error: error,
+        errorMsg: errorMsg,
       };
     }
     throw new UnprocessableEntityException(
@@ -120,16 +154,14 @@ export class QumlToOdkService {
 
     let questionIdentifiers = [];
     // if there are questions available and requested random questions count is > available questions from question bank
-    if (response.result.count >= filters.randomQuestionsCount) {
+    if (response && response.result.count >= filters.randomQuestionsCount) {
       // let's sort the available questions in random order
       const randomQuestionsList = response.result.Question.sort(
         () => Math.random() - 0.5,
       );
-      questionIdentifiers = randomQuestionsList
-        .slice(0, filters.randomQuestionsCount)
-        .map((obj) => {
-          return obj.identifier;
-        });
+      questionIdentifiers = randomQuestionsList.map((obj) => {
+        return obj.identifier;
+      });
       this.logger.debug(
         'Questions fetched ' +
           '(' +

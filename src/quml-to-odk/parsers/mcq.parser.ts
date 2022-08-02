@@ -71,7 +71,7 @@ export class McqParser {
     const totalMarksCellArray = [];
     const optionsMap = ['a', 'b', 'c', 'd'];
     const optionRowsArray = [];
-    for (const question of questions.result.questions) {
+    for (const question of questions) {
       const itemName = (
         'ques_' +
         filters.subjects[0] +
@@ -237,7 +237,7 @@ export class McqParser {
       [
         'hidden',
         'ques_number',
-        questions.result.questions.length,
+        questions.length,
         '',
         '',
         '',
@@ -251,7 +251,7 @@ export class McqParser {
       [
         'hidden',
         'total_ques',
-        'कुल प्रश्न = ' + questions.result.questions.length,
+        'कुल प्रश्न = ' + questions.length,
         '',
         '',
         '',
