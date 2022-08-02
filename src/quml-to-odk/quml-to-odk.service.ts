@@ -21,6 +21,7 @@ import nodeHtmlToImage from 'node-html-to-image';
 
 @Injectable()
 export class QumlToOdkService {
+  private readonly baseUrl: string;
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
 
@@ -31,6 +32,7 @@ export class QumlToOdkService {
     private readonly httpService: HttpService,
     private readonly formService: FormService,
   ) {
+    this.baseUrl = configService.get<string>('QUML_ODK_BASE_URL');
     this.questionBankUrl = configService.get<string>(
       'QUML_ODK_QUESTION_BANK_URL',
     );
@@ -49,7 +51,7 @@ export class QumlToOdkService {
       // based on question type, we'll use different parsers
       switch (filters.qType) {
         case QuestionTypesEnum.MCQ:
-          service = new McqParser(); // create the instance
+          service = new McqParser(this); // create the instance
           break;
         default:
           throw new NotImplementedException(
@@ -179,10 +181,12 @@ export class QumlToOdkService {
   ): Promise<boolean> {
     // Make sure the binary is installed system wide; Ref: https://github.com/XLSForm/pyxform
     const command = 'xls2xform ' + inputFile + ' ' + outputFile;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
     return await new Promise(function (resolve, reject) {
       exec(command, (error) => {
         if (error) {
-          console.log('Error generating ODK form: ', error);
+          self.logger.error('Error generating ODK form: ', error);
           reject(false);
           return;
         }
@@ -229,7 +233,7 @@ export class QumlToOdkService {
    * Returns null or an object containing image path & name
    * @param image
    */
-  public static saveImage(image: string) {
+  public saveImage(image: string) {
     let imagePath = null;
     let imageName = null;
     const templateName = uuid();
@@ -239,19 +243,26 @@ export class QumlToOdkService {
         const extension = image.split(';')[0].split('/')[1];
         imageName = `${templateName}.${extension}`;
         imagePath = `./gen/images/${templateName}.${extension}`;
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
         fs.writeFile(imagePath, base64Data, 'base64', function (err) {
           if (err) {
-            console.log('Error writing image file (1): ', err);
+            self.logger.error('Error writing image file (1): ', err);
           }
         });
       } else {
         const extension = image.split('.').slice(-1)[0];
         imageName = `${templateName}.${extension}`;
         imagePath = `./gen/images/${templateName}.${extension}`;
+        if (image.substring(0, 4) !== 'http') {
+          // if it's not an absolute URL, we need to make it full absolute URL
+          image = this.baseUrl + image;
+        }
         https.get(image, (resp) => resp.pipe(fs.createWriteStream(imagePath)));
       }
     } catch (e) {
-      console.log('Error writing image file (2): ', e);
+      this.logger.error('Error writing image file (2): ', e);
+      throw e;
     }
 
     return {
@@ -279,7 +290,7 @@ export class QumlToOdkService {
     return tables;
   }
 
-  public static async htmlTableToImage(tables: string): Promise<string> {
+  public async htmlTableToImage(tables: string): Promise<string> {
     const name = uuid();
     const path = `./gen/images/${name}.png`;
     await nodeHtmlToImage({

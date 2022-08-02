@@ -3,6 +3,8 @@ import { QumlToOdkService } from '../quml-to-odk.service';
 import * as XLSX from 'xlsx';
 
 export class McqParser {
+  constructor(private readonly service: QumlToOdkService) {}
+
   /**
    * Prepares the XSLX form sheets data as per the provided template file: https://docs.google.com/spreadsheets/d/1GIcHghGYUR1FZ31BD-LCXBNMzr1xdCmQ/edit#gid=1148196142
    *
@@ -11,7 +13,7 @@ export class McqParser {
    *
    * @return Array arrays of arrays for all the 4 sheets as mentioned in sample
    */
-  private static async parseQuestions(
+  private async parseQuestions(
     questions,
     filters: GenerateFormDto,
   ): Promise<Array<any>> {
@@ -99,7 +101,7 @@ export class McqParser {
           question.editorState.question,
         )) !== null
       ) {
-        const questionImageObject = QumlToOdkService.saveImage(questionImage);
+        const questionImageObject = this.service.saveImage(questionImage);
         if (questionImageObject.path) {
           imagePathsArray.push(questionImageObject.path); // push the path in array
           itemImage = questionImageObject.name;
@@ -113,7 +115,7 @@ export class McqParser {
           question.editorState.question,
         )).length
       ) {
-        const questionTableImagePath = await QumlToOdkService.htmlTableToImage(
+        const questionTableImagePath = await this.service.htmlTableToImage(
           questionTables.join('<br>'),
         );
         itemImage = questionTableImagePath.split('/').slice(-1)[0];
@@ -149,7 +151,7 @@ export class McqParser {
             option.value.body,
           )) !== null
         ) {
-          const optionImageObject = QumlToOdkService.saveImage(optionImage);
+          const optionImageObject = this.service.saveImage(optionImage);
           if (optionImageObject.path) {
             imagePathsArray.push(optionImageObject.path); // push the path in array
             optionImage = optionImageObject.name;
@@ -163,7 +165,7 @@ export class McqParser {
             option.value.body,
           )).length
         ) {
-          const optionTableImagePath = await QumlToOdkService.htmlTableToImage(
+          const optionTableImagePath = await this.service.htmlTableToImage(
             optionTables.join('<br>'),
           );
           itemImage = optionTableImagePath.split('/').slice(-1)[0];
@@ -328,7 +330,7 @@ export class McqParser {
     filters: GenerateFormDto,
     filepath: string,
   ): Promise<Array<string>> {
-    const data = await McqParser.parseQuestions(questions, filters);
+    const data = await this.parseQuestions(questions, filters);
     const surveySheetArray = data[0];
     const choicesSheetArray = data[1];
     const mediaSheetArray = data[2];
