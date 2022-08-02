@@ -11,7 +11,10 @@ export class McqParser {
    *
    * @return Array arrays of arrays for all the 4 sheets as mentioned in sample
    */
-  private parseQuestions(questions, filters: GenerateFormDto): Array<any> {
+  private static async parseQuestions(
+    questions,
+    filters: GenerateFormDto,
+  ): Promise<Array<any>> {
     const imagePathsArray = [];
     const surveySheetHeader = [
       'type',
@@ -66,7 +69,7 @@ export class McqParser {
     const totalMarksCellArray = [];
     const optionsMap = ['a', 'b', 'c', 'd'];
     const optionRowsArray = [];
-    questions.result.questions.forEach((question) => {
+    for (const question of questions.result.questions) {
       const itemName = (
         'ques_' +
         filters.subjects[0] +
@@ -110,7 +113,7 @@ export class McqParser {
           question.editorState.question,
         )).length
       ) {
-        const questionTableImagePath = QumlToOdkService.htmlTableToImage(
+        const questionTableImagePath = await QumlToOdkService.htmlTableToImage(
           questionTables.join('<br>'),
         );
         itemImage = questionTableImagePath.split('/').slice(-1)[0];
@@ -160,7 +163,7 @@ export class McqParser {
             option.value.body,
           )).length
         ) {
-          const optionTableImagePath = QumlToOdkService.htmlTableToImage(
+          const optionTableImagePath = await QumlToOdkService.htmlTableToImage(
             optionTables.join('<br>'),
           );
           itemImage = optionTableImagePath.split('/').slice(-1)[0];
@@ -192,7 +195,7 @@ export class McqParser {
       ]);
 
       index++; // at last increment the index
-    }); // forEach() ends
+    } // for() ends
 
     surveySheetArray.push([
       'end group',
@@ -320,12 +323,12 @@ export class McqParser {
    * @param filepath
    * @return string file (absolute path of the generated XSLX form)
    */
-  public createForm(
+  public async createForm(
     questions,
     filters: GenerateFormDto,
     filepath: string,
-  ): Array<string> {
-    const data = this.parseQuestions(questions, filters);
+  ): Promise<Array<string>> {
+    const data = await McqParser.parseQuestions(questions, filters);
     const surveySheetArray = data[0];
     const choicesSheetArray = data[1];
     const mediaSheetArray = data[2];

@@ -59,7 +59,7 @@ export class QumlToOdkService {
       }
 
       this.logger.debug('Generating XSLX form..');
-      const form = service.createForm(
+      const form = await service.createForm(
         questions,
         filters,
         './gen/xlsx/' + templateFileName + '.xlsx',
@@ -279,10 +279,10 @@ export class QumlToOdkService {
     return tables;
   }
 
-  public static htmlTableToImage(tables: string): string {
+  public static async htmlTableToImage(tables: string): Promise<string> {
     const name = uuid();
     const path = `./gen/images/${name}.png`;
-    nodeHtmlToImage({
+    await nodeHtmlToImage({
       output: path,
       html: tables,
       transparent: true,
