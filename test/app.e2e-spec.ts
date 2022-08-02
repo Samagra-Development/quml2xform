@@ -23,9 +23,10 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  jest.setTimeout(50000);
   it('/quml-to-odk (POST)', () => {
     const body = {
-      randomQuestionsCount: 1,
+      randomQuestionsCount: 10,
       boards: ['CBSE'],
       grades: ['Class 6'],
       subjects: ['Mathematics'],
@@ -37,12 +38,16 @@ describe('AppController (e2e)', () => {
       .send(body)
       .expect(201)
       .expect((res) => {
-        if (!res.body.xlsxFile || !fs.existsSync(res.body.xlsxFile)) {
-          throw Error('Failed creating file..');
+        if (!res.body.xlsxFiles || !fs.existsSync(res.body.xlsxFiles[0])) {
+          throw new Error('Test failed. No files created..');
         }
-        if (!res.body.odkFile || !fs.existsSync(res.body.odkFile)) {
-          throw Error('Failed creating file..');
+        if (!res.body.odkFiles || !fs.existsSync(res.body.odkFiles[0])) {
+          throw new Error('Test failed. No files created..');
         }
+        if (!res.body.formIds || res.body.formIds.length === 0) {
+          throw new Error('Test failed. No forms uploaded..');
+        }
+        console.log('Test successful. Form IDs: ', res.body.formIds);
       });
   });
 });
