@@ -103,7 +103,7 @@ export class QumlToOdkService {
           odkFormFile,
           formImageFiles,
         );
-        if (formUploadResponse.status === 'UPLOADED') {
+        if (formUploadResponse && formUploadResponse.status === 'UPLOADED') {
           formIds.push(formUploadResponse.data.formID);
         } else {
           error = true;
