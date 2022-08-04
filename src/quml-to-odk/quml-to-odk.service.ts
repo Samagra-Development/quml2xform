@@ -103,11 +103,16 @@ export class QumlToOdkService {
           odkFormFile,
           formImageFiles,
         );
-        if (formUploadResponse && formUploadResponse.status === 'UPLOADED') {
+        if (
+          formUploadResponse &&
+          formUploadResponse.status &&
+          formUploadResponse.status === 'UPLOADED'
+        ) {
           formIds.push(formUploadResponse.data.formID);
         } else {
           error = true;
           errorMsg = 'Form Upload Failed!';
+          this.logger.error(`Form Upload error..${i}`, formUploadResponse);
         }
         xlsxFormFiles.push(xlsxFormFile);
         odkFormFiles.push(odkFormFile);
