@@ -180,7 +180,8 @@ export class QumlToOdkService {
       this.logger.debug('Requested questions count is not available!!');
     }
 
-    let questions = [];
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    let questions: {} = [];
     if (questionIdentifiers.length) {
       questions = await this.fetchQuestionDetails(questionIdentifiers);
     }
@@ -188,27 +189,44 @@ export class QumlToOdkService {
   }
 
   private async fetchQuestionDetails(identifiers) {
-    return lastValueFrom(
-      this.httpService
-        .post(
-          this.questionDetailsUrl,
-          {
-            request: {
-              search: {
-                identifier: identifiers,
+    let result = {};
+    const chunkSize = 20; // because the API allows searching for 20 max at a time
+    for (let i = 0; i < identifiers.length; i += chunkSize) {
+      const chunk = identifiers.slice(i, i + chunkSize);
+      console.log(chunk);
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      const fetchedResult: object = await lastValueFrom(
+        this.httpService
+          .post(
+            this.questionDetailsUrl,
+            {
+              request: {
+                search: {
+                  identifier: chunk,
+                },
               },
             },
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-          },
-        )
-        .pipe(
-          map((res) => {
-            return res.status == 200 ? res.data : null;
-          }),
-        ),
-    );
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+          .pipe(
+            map((res) => {
+              return res.status == 200 ? res.data : null;
+            }),
+          ),
+      );
+
+      if (Object.keys(result).length === 0) {
+        result = fetchedResult;
+      } else {
+        result['result']['questions'] = result['result']['questions'].concat(
+          fetchedResult['result']['questions'],
+        );
+        result['result']['count'] += fetchedResult['result']['count'];
+      }
+    }
+    return result;
   }
 
   private async convertExcelToOdkForm(
