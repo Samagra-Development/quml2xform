@@ -43,6 +43,7 @@ POST {{url}}/quml-to-odk
     "qType": "MCQ"
 }
 ```
+The params `randomQuestionsCount`, `boards`, `grades`, `subjects`, `competencies` can all be sent as per need & the filters will be applied under the hood. `qType` for now is limited to "MCQ" only.
 
 ## Generated Files
 - XLSX files will be generated at path: `./gen/xlsx`
