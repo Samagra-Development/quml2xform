@@ -139,7 +139,7 @@ export class QumlToOdkService {
           gradeLevel: filters.grades,
           subject: filters.subjects,
           qType: filters.qType,
-          topic: filters.competencies,
+          learningOutcome: filters.competencies,
         },
       },
     };
