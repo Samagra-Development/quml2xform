@@ -34,9 +34,9 @@ Make sure the python tool is installed system wide: https://github.com/XLSForm/p
 POST {{url}}/quml-to-odk
 {
     "randomQuestionsCount": 5,
-    "boards": ["CBSE"],
-    "grades": ["Class 6"],
-    "subjects": ["Mathematics"],
+    "board": "CBSE",
+    "grade": "Class 6",
+    "subject": "Mathematics",
     "competencies": [
         "Data Handling"
     ],

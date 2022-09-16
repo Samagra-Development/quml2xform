@@ -2,6 +2,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsIn,
+  IsNotEmpty,
   IsNumber,
   IsString,
   Min,
@@ -9,19 +10,34 @@ import {
 import { QuestionTypesEnum } from '../enums/question-types.enum';
 
 export class GenerateFormDto {
-  @IsArray()
-  @ArrayNotEmpty()
-  public boards: Array<string>;
+  @IsString()
+  @IsNotEmpty()
+  public board: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn([
+    'Class 1',
+    'Class 2',
+    'Class 3',
+    'Class 4',
+    'Class 5',
+    'Class 6',
+    'Class 7',
+    'Class 8',
+    'Class 9',
+    'Class 10',
+    'Class 11',
+    'Class 12',
+  ])
+  public grade: string;
+
+  @IsString()
+  @IsNotEmpty()
+  public subject: string;
 
   @IsArray()
   @ArrayNotEmpty()
-  public grades: Array<string>;
-
-  @IsArray()
-  @ArrayNotEmpty()
-  public subjects: Array<string>;
-
-  @IsArray()
   public competencies: Array<string>;
 
   @IsNumber()

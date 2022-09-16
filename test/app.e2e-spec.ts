@@ -26,11 +26,13 @@ describe('AppController (e2e)', () => {
   jest.setTimeout(50000);
   it('/quml-to-odk (POST)', () => {
     const body = {
-      randomQuestionsCount: 10,
-      boards: ['CBSE'],
-      grades: ['Class 6'],
-      subjects: ['Mathematics'],
-      competencies: ['Data Handling'],
+      randomQuestionsCount: 5,
+      board: 'State (Haryana)',
+      grade: 'Class 6',
+      subject: 'Mathematics',
+      competencies: [
+        'MAT601 विद्यार्थी किसी प्राकृत संख्या को विभिन्न तरीकों से पढ़, लिख, तुलना और व्याख्या कर सकते हैं और उनपर चारों संक्रियाएं कर सकते हैं।',
+      ],
       qType: 'MCQ',
     };
     return request(app.getHttpServer())

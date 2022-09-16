@@ -42,12 +42,7 @@ export class McqParser {
     let surveySheetArray = [surveySheetHeader];
     const choicesSheetArray = [choicesSheetHeader];
     const settingsSheetArray = [settingsSheetHeader];
-    let name =
-      filters.boards[0] +
-      '_' +
-      filters.grades.join('_') +
-      '_' +
-      filters.subjects.join('_');
+    let name = filters.board + '_' + filters.grade + '_' + filters.subject;
     name = name
       .replace(/[^a-zA-Z0-9\\s]/g, '_') // remove any white space
       .toLowerCase();
@@ -72,12 +67,7 @@ export class McqParser {
     const optionsMap = ['a', 'b', 'c', 'd'];
     const optionRowsArray = [];
     for (const question of questions) {
-      const itemName = (
-        'ques_' +
-        filters.subjects[0] +
-        '_' +
-        index
-      ).toLowerCase();
+      const itemName = ('ques_' + filters.subject + '_' + index).toLowerCase();
       const itemType = 'select_one ' + itemName;
       let itemLabel = QumlToOdkService.cleanHtml(question.editorState.question);
       if (itemLabel === '') {
@@ -287,9 +277,9 @@ export class McqParser {
      *   e.g. Class_6_Mathematics_297202220428
      */
     let formId =
-      filters.grades[0].replace(/[^a-zA-Z0-9\\s]/g, '_') +
+      filters.grade.replace(/[^a-zA-Z0-9\\s]/g, '_') +
       '_' +
-      filters.subjects[0].replace(/[^a-zA-Z0-9\\s]/g, '_');
+      filters.subject.replace(/[^a-zA-Z0-9\\s]/g, '_');
     const currDate = new Date().toLocaleString();
     formId =
       formId.toLowerCase() +

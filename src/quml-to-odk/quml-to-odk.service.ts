@@ -82,6 +82,7 @@ export class QumlToOdkService {
           i * filters.randomQuestionsCount,
           i * filters.randomQuestionsCount + filters.randomQuestionsCount,
         );
+        console.log(formQuestions);
 
         this.logger.debug(`Generating XSLX form..${i}`);
         const form = await service.createForm(
@@ -135,9 +136,9 @@ export class QumlToOdkService {
     const requestBody = {
       request: {
         filters: {
-          se_boards: filters.boards,
-          gradeLevel: filters.grades,
-          subject: filters.subjects,
+          se_boards: filters.board,
+          gradeLevel: filters.grade,
+          subject: filters.subject,
           qType: filters.qType,
           learningOutcome: filters.competencies,
         },
