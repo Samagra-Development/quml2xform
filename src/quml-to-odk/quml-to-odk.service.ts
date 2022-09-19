@@ -18,6 +18,7 @@ import * as https from 'https';
 import * as fs from 'fs';
 import * as striptags from 'striptags';
 import nodeHtmlToImage from 'node-html-to-image';
+import { AppService } from '../app.service';
 
 @Injectable()
 export class QumlToOdkService {
@@ -25,6 +26,7 @@ export class QumlToOdkService {
   private readonly baseUrl: string;
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
+  private readonly hasuraDumpFormMapping: boolean;
 
   private readonly logger = new Logger(QumlToOdkService.name); // logger instance
 
@@ -32,6 +34,7 @@ export class QumlToOdkService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
     private readonly formService: FormService,
+    private readonly appService: AppService,
   ) {
     this.baseUrl = configService.get<string>('QUML_ODK_BASE_URL');
     this.questionBankUrl = configService.get<string>(
@@ -41,6 +44,9 @@ export class QumlToOdkService {
       'QUML_ODK_QUESTION_BANK_DETAILS_URL',
     );
     this.maxFormsAllowed = configService.get<number>('MAX_FORMS_ALLOWED', 10);
+    this.hasuraDumpFormMapping =
+      configService.get<string>('HASURA_DUMP_FORMS_MAPPING', 'FALSE') ===
+      'TRUE';
   }
 
   public async generate(filters: GenerateFormDto) {
@@ -82,7 +88,6 @@ export class QumlToOdkService {
           i * filters.randomQuestionsCount,
           i * filters.randomQuestionsCount + filters.randomQuestionsCount,
         );
-        console.log(formQuestions);
 
         this.logger.debug(`Generating XSLX form..${i}`);
         const form = await service.createForm(
@@ -118,6 +123,20 @@ export class QumlToOdkService {
         xlsxFormFiles.push(xlsxFormFile);
         odkFormFiles.push(odkFormFile);
       } // for() end
+
+      if (this.hasuraDumpFormMapping && formIds.length) {
+        this.logger.debug('Uploading entries into Hasura...');
+        const grade = filters.grade
+          .toLowerCase()
+          .replace('class', '')
+          .replace(' ', '');
+        await this.findWorkflowMapping(
+          filters.subject,
+          parseInt(grade),
+          filters.competency,
+          formIds,
+        );
+      }
       return {
         xlsxFiles: xlsxFormFiles,
         odkFiles: odkFormFiles,
@@ -140,7 +159,7 @@ export class QumlToOdkService {
           gradeLevel: filters.grade,
           subject: filters.subject,
           qType: filters.qType,
-          learningOutcome: filters.competencies,
+          learningOutcome: filters.competency,
         },
       },
     };
@@ -194,7 +213,6 @@ export class QumlToOdkService {
     const chunkSize = 20; // because the API allows searching for 20 max at a time
     for (let i = 0; i < identifiers.length; i += chunkSize) {
       const chunk = identifiers.slice(i, i + chunkSize);
-      console.log(chunk);
       // eslint-disable-next-line @typescript-eslint/ban-types
       const fetchedResult: object = await lastValueFrom(
         this.httpService
@@ -356,5 +374,96 @@ export class QumlToOdkService {
       selector: 'table',
     });
     return path;
+  }
+
+  private async findWorkflowMapping(
+    subject: string,
+    grade: number,
+    competency: string,
+    refIds: Array<string>,
+    mappingType = 'odk',
+  ) {
+    const queryCompetency = {
+      query: `
+        query CompetencyQuery($name: String) {
+          competencies(where: {name: {_eq: $name}}, limit: 1) {
+            id
+          }
+        }`,
+      variables: { name: competency },
+    };
+    const result = await this.appService.hasuraGraphQLCall(queryCompetency);
+    let competencyId: number;
+    if (result?.data?.competencies?.length) {
+      competencyId = result.data.competencies[0].id;
+      this.logger.debug(`Competency ID found: ${competencyId}`);
+    } else {
+      const queryInsert = {
+        query: `
+          mutation MyMutation($name: String) {
+            insert_competencies_one(object: {name: $name}) {
+              id
+            }
+          }`,
+        variables: { name: competency },
+      };
+      const result = await this.appService.hasuraGraphQLCall(queryInsert);
+      if (result?.data?.insert_competencies_one?.id) {
+        competencyId = result.data.insert_competencies_one.id;
+        this.logger.debug(`Competency ID inserted: ${competencyId}`);
+      }
+    }
+    if (competencyId) {
+      const queryWorkflowMapping = {
+        query: `
+          query MyQuery($competencyId: Int, $grade: Int, $subject: String, $type: String) {
+            workflow_refids_mapping(where: {competency_id: {_eq: $competencyId}, grade: {_eq: $grade}, subject: {_eq: $subject}, type: {_eq: $type}}) {
+              id
+              ref_ids
+            }
+          }`,
+        variables: {
+          competencyId: competencyId,
+          grade: grade,
+          subject: subject,
+          type: mappingType,
+        },
+      };
+      const result = await this.appService.hasuraGraphQLCall(
+        queryWorkflowMapping,
+      );
+      if (result?.data?.workflow_refids_mapping?.length) {
+        refIds = refIds.concat(result.data.workflow_refids_mapping[0].ref_ids);
+        this.logger.debug(`Existing ref_ids found: ${refIds}`);
+      }
+      if (refIds.length) {
+        const queryInsert = {
+          query: `
+            mutation MyMutation($competencyId: Int, $grade: Int, $subject: String, $type: String, $refIds: jsonb) {
+              insert_workflow_refids_mapping_one(
+                object: {competency_id: $competencyId, grade: $grade, subject: $subject, type: $type, ref_ids: $refIds},
+                on_conflict: {constraint: workflow_refids_mapping_competency_id_grade_subject_type_key, update_columns: ref_ids}
+              ) {
+                id
+              }
+            }`,
+          variables: {
+            competencyId: competencyId,
+            grade: grade,
+            subject: subject,
+            type: mappingType,
+            refIds: refIds,
+          },
+        };
+        const result = await this.appService.hasuraGraphQLCall(queryInsert);
+        if (result?.data?.insert_workflow_refids_mapping_one) {
+          this.logger.log(`Workflow RefIds added/updated in Hasura: ${refIds}`);
+        }
+      }
+    } else {
+      this.logger.warn(
+        `Tried inserting new Competency ID but failed for some reason!!!`,
+      );
+    }
   }
 }

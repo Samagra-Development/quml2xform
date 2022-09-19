@@ -30,9 +30,8 @@ describe('AppController (e2e)', () => {
       board: 'State (Haryana)',
       grade: 'Class 6',
       subject: 'Mathematics',
-      competencies: [
+      competency:
         'MAT601 विद्यार्थी किसी प्राकृत संख्या को विभिन्न तरीकों से पढ़, लिख, तुलना और व्याख्या कर सकते हैं और उनपर चारों संक्रियाएं कर सकते हैं।',
-      ],
       qType: 'MCQ',
     };
     return request(app.getHttpServer())

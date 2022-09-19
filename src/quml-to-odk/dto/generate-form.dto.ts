@@ -1,12 +1,4 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsIn,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { QuestionTypesEnum } from '../enums/question-types.enum';
 
 export class GenerateFormDto {
@@ -36,9 +28,9 @@ export class GenerateFormDto {
   @IsNotEmpty()
   public subject: string;
 
-  @IsArray()
-  @ArrayNotEmpty()
-  public competencies: Array<string>;
+  @IsString()
+  @IsNotEmpty()
+  public competency: string;
 
   @IsNumber()
   @Min(1)
