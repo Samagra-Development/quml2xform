@@ -27,6 +27,7 @@ export class QumlToOdkService {
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
   private readonly hasuraDumpFormMapping: boolean;
+  private readonly uploadFormsToAggregate: boolean;
 
   private readonly logger = new Logger(QumlToOdkService.name); // logger instance
 
@@ -47,6 +48,8 @@ export class QumlToOdkService {
     this.hasuraDumpFormMapping =
       configService.get<string>('HASURA_DUMP_FORMS_MAPPING', 'FALSE') ===
       'TRUE';
+    this.uploadFormsToAggregate =
+      configService.get<string>('UPLOAD_FORMS', 'FALSE') === 'TRUE';
   }
 
   public async generate(filters: GenerateFormDto) {
@@ -104,21 +107,27 @@ export class QumlToOdkService {
           throw new InternalServerErrorException('Form generation failed.');
         }
 
-        this.logger.debug(`Uploading form..${i} Image files:`, formImageFiles);
-        const formUploadResponse = await this.formService.uploadForm(
-          odkFormFile,
-          formImageFiles,
-        );
-        if (
-          formUploadResponse &&
-          formUploadResponse.status &&
-          formUploadResponse.status === 'UPLOADED'
-        ) {
-          formIds.push(formUploadResponse.data.formID);
-        } else {
-          error = true;
-          errorMsg = 'Form Upload Failed!';
-          this.logger.error(`Form Upload error..${i}`, formUploadResponse);
+        if (this.uploadFormsToAggregate) {
+          // if form upload to aggregate allowed
+          this.logger.debug(
+            `Uploading form..${i} Image files:`,
+            formImageFiles,
+          );
+          const formUploadResponse = await this.formService.uploadForm(
+            odkFormFile,
+            formImageFiles,
+          );
+          if (
+            formUploadResponse &&
+            formUploadResponse.status &&
+            formUploadResponse.status === 'UPLOADED'
+          ) {
+            formIds.push(formUploadResponse.data.formID);
+          } else {
+            error = true;
+            errorMsg = 'Form Upload Failed!';
+            this.logger.error(`Form Upload error..${i}`, formUploadResponse);
+          }
         }
         xlsxFormFiles.push(xlsxFormFile);
         odkFormFiles.push(odkFormFile);
