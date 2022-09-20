@@ -11,8 +11,10 @@ $ yarn install
 ```
 
 ## Running the app
-
 Create `.env` file (can be copied from `.env.example`) and configure all the variables as per need & development environment.
+
+### Using docker
+Simply hit `docker-compose up -d`, or use manual installation as per below steps:
 
 ```bash
 # development
@@ -25,8 +27,8 @@ $ yarn run start:dev
 $ yarn run start:prod
 ```
 
-Make sure the python tool is installed system wide: https://github.com/XLSForm/pyxform#running-the-latest-release-of-pyxform. We are using this tool to generate XML from XLSX form using command line utility available from the tool:
-
+> **Note:**
+> For Manual installation, make sure the python tool is installed system wide: https://github.com/XLSForm/pyxform#running-the-latest-release-of-pyxform. We are using this tool to generate XML from XLSX form using command line utility available from the tool:
 ```xls2xform path_to_XLSForm [output_path]```
 
 ## Routes
