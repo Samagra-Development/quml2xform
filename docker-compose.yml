@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  main:
+    container_name: quml2xform
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - ${PORT}:${PORT}
+    command: yarn run start:dev
+    env_file:
+      - .env
+    networks:
+      - webnet
+networks:
+  webnet:
