@@ -42,6 +42,19 @@ POST {{url}}/quml-to-odk
     "competency":"Data Handling",
     "qType": "MCQ"
 }
+
+POST {{url}}/quml-to-odk/bulk
+[
+    {
+        "randomQuestionsCount": 5,
+        "board": "CBSE",
+        "grade": "Class 6",
+        "subject": "Mathematics",
+        "competency":"Data Handling",
+        "qType": "MCQ"
+    },
+    ...
+]
 ```
 The params `randomQuestionsCount`, `board`, `grade`, `subject`, `competency` can all be sent as per need & the filters will be applied under the hood. `qType` for now is limited to "MCQ" only.
 

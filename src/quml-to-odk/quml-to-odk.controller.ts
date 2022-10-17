@@ -10,4 +10,9 @@ export class QumlToOdkController {
   public generate(@Body() createQumlToOdkDto: GenerateFormDto): any {
     return this.service.generate(createQumlToOdkDto);
   }
+
+  @Post('bulk')
+  public async generateBulk(@Body() body): Promise<Array<GenerateFormDto>> {
+    return this.service.generateBulk(body);
+  }
 }

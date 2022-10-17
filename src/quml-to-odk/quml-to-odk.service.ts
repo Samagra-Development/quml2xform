@@ -78,7 +78,7 @@ export class QumlToOdkService {
       const formsToGenerate: number = Math.floor(
         questions.result.count / filters.randomQuestionsCount,
       );
-      this.logger.debug('Forms to generate: ', formsToGenerate);
+      this.logger.debug('Forms to generate: ' + formsToGenerate);
       for (let i = 0; i < formsToGenerate; i++) {
         if (i + 1 > this.maxFormsAllowed) {
           this.logger.log(
@@ -474,5 +474,28 @@ export class QumlToOdkService {
         `Tried inserting new Competency ID but failed for some reason!!!`,
       );
     }
+  }
+
+  public async generateBulk(body): Promise<Array<GenerateFormDto>> {
+    this.logger.debug('Total records found: ' + body.length);
+    const response: Array<GenerateFormDto> = [];
+    let count = 0;
+    for (const object of body) {
+      count++;
+      let result = {};
+      let error = '';
+      try {
+        result = await this.generate(object);
+        object['result'] = result;
+      } catch (e) {
+        error = e.toString();
+        object['result'] = error;
+      }
+      response.push(object);
+      this.logger.debug(
+        `${count}. processed..` + JSON.stringify(object['result']),
+      );
+    }
+    return response;
   }
 }
