@@ -139,7 +139,7 @@ export class QumlToOdkService {
           .toLowerCase()
           .replace('class', '')
           .replace(' ', '');
-        await this.findWorkflowMapping(
+        await this.uploadMappingToHasura(
           filters.subject,
           parseInt(grade),
           filters.competency,
@@ -385,7 +385,7 @@ export class QumlToOdkService {
     return path;
   }
 
-  private async findWorkflowMapping(
+  private async uploadMappingToHasura(
     subject: string,
     grade: number,
     competency: string,
