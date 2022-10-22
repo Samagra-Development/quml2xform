@@ -32,6 +32,7 @@ $ yarn run start:prod
 ```xls2xform path_to_XLSForm [output_path]```
 
 ## Routes
+### For Single Request
 ```
 POST {{url}}/quml-to-odk
 {
@@ -42,7 +43,10 @@ POST {{url}}/quml-to-odk
     "competency":"Data Handling",
     "qType": "MCQ"
 }
+```
 
+### For Bulk requests
+```
 POST {{url}}/quml-to-odk/bulk
 [
     {
@@ -57,6 +61,27 @@ POST {{url}}/quml-to-odk/bulk
 ]
 ```
 The params `randomQuestionsCount`, `board`, `grade`, `subject`, `competency` can all be sent as per need & the filters will be applied under the hood. `qType` for now is limited to "MCQ" only.
+
+### To generate forms via CSV-JSON
+A JSON body generated from the CSV should be passed as per below format:
+```
+POST {{url}}/quml-to-odk/via-json?randomQuestionsCount=3&board=State (Haryana)
+[
+  {
+    "Grade": "Class 6",
+    "Subject": "English",
+    "Question": "How old was Tansen when he went away with Swami Haridas?",
+    "option 1": "Twelve years old&nbsp;",
+    "option 2": "Ten years old&nbsp;",
+    "option 3": "Nine years old&nbsp;",
+    "option 4": "Eleven years old&nbsp;",
+    "CorrectAnswer(1/2/3/4)": 2,
+    "Competencies": "ENG605 Students can respond to questions by gathering information from notices, charts, diagrams, etc.",
+  },
+    ...
+]
+```
+CSV to JSON conversion tool: https://csvjson.com/csv2json
 
 ## Form IDs upload on Hasura
 - Ensure the tables `competencies` & `workflow_refids_mapping` exists on Hasura DB. Migration files exists at path `hasura-migrations/`

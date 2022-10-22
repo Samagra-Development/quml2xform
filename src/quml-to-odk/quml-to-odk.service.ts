@@ -29,7 +29,7 @@ export class QumlToOdkService {
   private readonly hasuraDumpFormMapping: boolean;
   private readonly uploadFormsToAggregate: boolean;
 
-  private readonly logger = new Logger(QumlToOdkService.name); // logger instance
+  protected readonly logger = new Logger(QumlToOdkService.name); // logger instance
 
   constructor(
     private readonly configService: ConfigService,
@@ -160,7 +160,7 @@ export class QumlToOdkService {
     );
   }
 
-  private async fetchQuestions(filters: GenerateFormDto): Promise<any> {
+  protected async fetchQuestions(filters: GenerateFormDto): Promise<any> {
     const requestBody = {
       request: {
         filters: {
