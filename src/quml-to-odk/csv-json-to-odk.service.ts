@@ -6,7 +6,7 @@ import { QuestionTypesEnum } from './enums/question-types.enum';
 @Injectable()
 export class CsvJsonToOdkService extends QumlToOdkService {
   private apiResponse;
-  private filters: Array<GenerateFormDto> = [];
+  private filters: Array<GenerateFormDto>;
 
   protected readonly logger = new Logger(CsvJsonToOdkService.name); // logger instance
 
@@ -46,6 +46,7 @@ export class CsvJsonToOdkService extends QumlToOdkService {
 
   private __prepare(body, randomQuestionsCount: number, board: string) {
     this.apiResponse = {};
+    this.filters = [];
     body.forEach((item) => {
       const key = CsvJsonToOdkService.__get_record_key(
         item['Grade'],

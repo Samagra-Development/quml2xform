@@ -87,10 +87,9 @@ export class QumlToOdkService {
           break;
         }
         const templateFileName = uuid(); // initialize the template name
-        const formQuestions = questions.result.questions.slice(
-          i * filters.randomQuestionsCount,
-          i * filters.randomQuestionsCount + filters.randomQuestionsCount,
-        );
+        const start = parseInt(String(i * filters.randomQuestionsCount));
+        const end = start + parseInt(String(filters.randomQuestionsCount));
+        const formQuestions = questions.result.questions.slice(start, end);
 
         this.logger.debug(`Generating XSLX form..${i}`);
         const form = await service.createForm(
