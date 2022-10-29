@@ -287,6 +287,7 @@ export class QumlToOdkService {
     nbspAsLineBreak = false,
     removeTable = true,
   ) {
+    str = str + ''; // parse to string
     // Remove HTML tags
     if (removeTable) {
       // if passed, we remove the image figure tag; Use case: we are replacing table with Image
