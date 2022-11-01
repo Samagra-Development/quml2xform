@@ -1,0 +1,4 @@
+export enum HasuraUploadTypesEnum {
+  COMPETENCY = 'COMPETENCY',
+  COMPETENCY_MAPPING = 'COMPETENCY_MAPPING',
+}

@@ -19,6 +19,7 @@ import * as fs from 'fs';
 import * as striptags from 'striptags';
 import nodeHtmlToImage from 'node-html-to-image';
 import { AppService } from '../app.service';
+import { HasuraUploadTypesEnum } from './enums/hasura-upload-types.enum';
 
 @Injectable()
 export class QumlToOdkService {
@@ -27,6 +28,7 @@ export class QumlToOdkService {
   private readonly questionBankUrl: string;
   private readonly questionDetailsUrl: string;
   private readonly hasuraDumpFormMapping: boolean;
+  private readonly hasuraUploadType: string;
   private readonly uploadFormsToAggregate: boolean;
 
   protected readonly logger = new Logger(QumlToOdkService.name); // logger instance
@@ -48,6 +50,7 @@ export class QumlToOdkService {
     this.hasuraDumpFormMapping =
       configService.get<string>('HASURA_DUMP_FORMS_MAPPING', 'FALSE') ===
       'TRUE';
+    this.hasuraUploadType = configService.get<string>('HASURA_UPLOAD_TYPE');
     this.uploadFormsToAggregate =
       configService.get<string>('UPLOAD_FORMS', 'FALSE') === 'TRUE';
   }
@@ -392,68 +395,44 @@ export class QumlToOdkService {
     refIds: Array<string>,
     mappingType = 'odk',
   ) {
-    const queryCompetency = {
-      query: `
-        query CompetencyQuery($name: String) {
-          competencies(where: {name: {_eq: $name}}, limit: 1) {
-            id
-          }
-        }`,
-      variables: { name: competency },
-    };
-    const result = await this.appService.hasuraGraphQLCall(queryCompetency);
-    let competencyId: number;
-    if (result?.data?.competencies?.length) {
-      competencyId = result.data.competencies[0].id;
-      this.logger.debug(`Competency ID found: ${competencyId}`);
-    } else {
-      const queryInsert = {
+    if (this.hasuraUploadType == HasuraUploadTypesEnum.COMPETENCY) {
+      const queryCompetency = {
         query: `
-          mutation MyMutation($name: String) {
-            insert_competencies_one(object: {name: $name}) {
+          query CompetencyQuery($name: String) {
+            competencies(where: {name: {_eq: $name}}, limit: 1) {
               id
             }
           }`,
         variables: { name: competency },
       };
-      const result = await this.appService.hasuraGraphQLCall(queryInsert);
-      if (result?.data?.insert_competencies_one?.id) {
-        competencyId = result.data.insert_competencies_one.id;
-        this.logger.debug(`Competency ID inserted: ${competencyId}`);
-      }
-    }
-    if (competencyId) {
-      const queryWorkflowMapping = {
-        query: `
-          query MyQuery($competencyId: Int, $grade: Int, $subject: String, $type: String) {
-            workflow_refids_mapping(where: {competency_id: {_eq: $competencyId}, grade: {_eq: $grade}, subject: {_eq: $subject}, type: {_eq: $type}}) {
-              id
-              ref_ids
-            }
-          }`,
-        variables: {
-          competencyId: competencyId,
-          grade: grade,
-          subject: subject,
-          type: mappingType,
-        },
-      };
-      const result = await this.appService.hasuraGraphQLCall(
-        queryWorkflowMapping,
-      );
-      if (result?.data?.workflow_refids_mapping?.length) {
-        refIds = refIds.concat(result.data.workflow_refids_mapping[0].ref_ids);
-        this.logger.debug(`Existing ref_ids found: ${refIds}`);
-      }
-      if (refIds.length) {
+      const result = await this.appService.hasuraGraphQLCall(queryCompetency);
+      let competencyId: number;
+      if (result?.data?.competencies?.length) {
+        competencyId = result.data.competencies[0].id;
+        this.logger.debug(`Competency ID found: ${competencyId}`);
+      } else {
         const queryInsert = {
           query: `
-            mutation MyMutation($competencyId: Int, $grade: Int, $subject: String, $type: String, $refIds: jsonb) {
-              insert_workflow_refids_mapping_one(
-                object: {competency_id: $competencyId, grade: $grade, subject: $subject, type: $type, ref_ids: $refIds},
-                on_conflict: {constraint: workflow_refids_mapping_competency_id_grade_subject_type_key, update_columns: ref_ids}
-              ) {
+            mutation MyMutation($name: String) {
+              insert_competencies_one(object: {name: $name}) {
                 id
+              }
+            }`,
+          variables: { name: competency },
+        };
+        const result = await this.appService.hasuraGraphQLCall(queryInsert);
+        if (result?.data?.insert_competencies_one?.id) {
+          competencyId = result.data.insert_competencies_one.id;
+          this.logger.debug(`Competency ID inserted: ${competencyId}`);
+        }
+      }
+      if (competencyId) {
+        const queryWorkflowMapping = {
+          query: `
+            query MyQuery($competencyId: Int, $grade: Int, $subject: String, $type: String) {
+              workflow_refids_mapping(where: {competency_id: {_eq: $competencyId}, grade: {_eq: $grade}, subject: {_eq: $subject}, type: {_eq: $type}}) {
+                id
+                ref_ids
               }
             }`,
           variables: {
@@ -461,18 +440,130 @@ export class QumlToOdkService {
             grade: grade,
             subject: subject,
             type: mappingType,
-            refIds: refIds,
           },
         };
-        const result = await this.appService.hasuraGraphQLCall(queryInsert);
-        if (result?.data?.insert_workflow_refids_mapping_one) {
-          this.logger.log(`Workflow RefIds added/updated in Hasura: ${refIds}`);
+        const result = await this.appService.hasuraGraphQLCall(
+          queryWorkflowMapping,
+        );
+        if (result?.data?.workflow_refids_mapping?.length) {
+          this.logger.debug(`Existing ref_ids found: ${refIds}`);
+          refIds = refIds.concat(
+            result.data.workflow_refids_mapping[0].ref_ids,
+          );
+        }
+        if (refIds.length) {
+          const queryInsert = {
+            query: `
+              mutation MyMutation($competencyId: Int, $grade: Int, $subject: String, $type: String, $refIds: jsonb) {
+                insert_workflow_refids_mapping_one(
+                  object: {competency_id: $competencyId, grade: $grade, subject: $subject, type: $type, ref_ids: $refIds},
+                  on_conflict: {constraint: workflow_refids_mapping_competency_id_grade_subject_type_key, update_columns: ref_ids}
+                ) {
+                  id
+                }
+              }`,
+            variables: {
+              competencyId: competencyId,
+              grade: grade,
+              subject: subject,
+              type: mappingType,
+              refIds: refIds,
+            },
+          };
+          const result = await this.appService.hasuraGraphQLCall(queryInsert);
+          if (result?.data?.insert_workflow_refids_mapping_one) {
+            this.logger.log(
+              `Workflow RefIds added/updated in Hasura: ${refIds}`,
+            );
+          }
+        }
+      } else {
+        this.logger.warn(
+          `Tried inserting new Competency ID but failed for some reason!!!`,
+        );
+      }
+    } else if (
+      this.hasuraUploadType == HasuraUploadTypesEnum.COMPETENCY_MAPPING
+    ) {
+      const queryCompetencyMapping = {
+        query: `
+        query CompetencyMapping($subject: String, $grade: String, $learning_outcome: String) {
+          competency_mapping(where: {subject: {_eq: $subject}, grade: {_eq: $grade}, learning_outcome: {_eq: $learning_outcome}}) {
+            competency_id
+            month
+          }
+        }`,
+        variables: {
+          subject: subject,
+          grade: grade + '',
+          learning_outcome: competency,
+        },
+      };
+      const result = await this.appService.hasuraGraphQLCall(
+        queryCompetencyMapping,
+      );
+      if (result?.data?.competency_mapping?.length) {
+        // now we know all the competency mapping; we'll populate ref ids
+        for (const item of result.data.competency_mapping) {
+          let newRefIds = refIds;
+          const competencyId = item.competency_id;
+          const month = item.month;
+          const queryWorkflowMapping = {
+            query: `
+              query MyQuery($competencyId: Int, $grade: Int, $subject: String, $type: String, $month: String) {
+                workflow_refids_mapping(where: {competency_id: {_eq: $competencyId}, grade: {_eq: $grade}, subject: {_eq: $subject}, type: {_eq: $type}, month: {_eq: $month}}) {
+                  id
+                  ref_ids
+                }
+              }`,
+            variables: {
+              competencyId: competencyId,
+              grade: grade,
+              subject: subject,
+              type: mappingType,
+              month: month,
+            },
+          };
+          const result = await this.appService.hasuraGraphQLCall(
+            queryWorkflowMapping,
+          );
+          if (result?.data?.workflow_refids_mapping?.length) {
+            this.logger.debug(
+              `Existing ref_ids found: ${result.data.workflow_refids_mapping[0].ref_ids}`,
+            );
+            newRefIds = newRefIds.concat(
+              result.data.workflow_refids_mapping[0].ref_ids,
+            );
+          }
+          if (newRefIds.length) {
+            const queryInsert = {
+              query: `
+                mutation MyMutation($competencyId: Int, $grade: Int, $subject: String, $type: String, $refIds: jsonb, $month: String) {
+                  insert_workflow_refids_mapping_one(
+                    object: {competency_id: $competencyId, grade: $grade, subject: $subject, type: $type, ref_ids: $refIds, month: $month},
+                    on_conflict: {constraint: workflow_refids_mapping_competency_id_grade_subject_type_month_, update_columns: ref_ids}
+                  ) {
+                    id
+                  }
+                }`,
+              variables: {
+                competencyId: competencyId,
+                grade: grade,
+                subject: subject,
+                type: mappingType,
+                refIds: newRefIds,
+                month: month,
+              },
+            };
+            const result = await this.appService.hasuraGraphQLCall(queryInsert);
+            if (result?.data?.insert_workflow_refids_mapping_one) {
+              this.logger.log(
+                `Workflow RefIds added/updated in Hasura: ${newRefIds}`,
+              );
+            }
+          }
         }
       }
-    } else {
-      this.logger.warn(
-        `Tried inserting new Competency ID but failed for some reason!!!`,
-      );
     }
   }
 

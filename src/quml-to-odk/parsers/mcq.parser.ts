@@ -67,7 +67,12 @@ export class McqParser {
     const optionsMap = ['a', 'b', 'c', 'd'];
     const optionRowsArray = [];
     for (const question of questions) {
-      const itemName = ('ques_' + filters.subject + '_' + index).toLowerCase();
+      const itemName = (
+        'ques_' +
+        filters.subject.replace(/[^a-zA-Z0-9\\s]/g, '_') +
+        '_' +
+        index
+      ).toLowerCase();
       const itemType = 'select_one ' + itemName;
       let itemLabel = QumlToOdkService.cleanHtml(question.editorState.question);
       if (itemLabel === '') {
@@ -280,6 +285,7 @@ export class McqParser {
       filters.grade.replace(/[^a-zA-Z0-9\\s]/g, '_') +
       '_' +
       filters.subject.replace(/[^a-zA-Z0-9\\s]/g, '_');
+    console.log(formId);
     const currDate = new Date().toLocaleString();
     formId =
       formId.toLowerCase() +
