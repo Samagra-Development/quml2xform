@@ -488,7 +488,7 @@ export class QumlToOdkService {
       const queryCompetencyMapping = {
         query: `
         query CompetencyMapping($subject: String, $grade: String, $learning_outcome: String) {
-          competency_mapping(where: {subject: {_eq: $subject}, grade: {_eq: $grade}, learning_outcome: {_eq: $learning_outcome}}) {
+          competency_mapping(where: {subject: {_eq: $subject}, grade: {_eq: $grade}, learning_outcome: {_ilike: $learning_outcome}}) {
             competency_id
             month
           }
@@ -496,7 +496,7 @@ export class QumlToOdkService {
         variables: {
           subject: subject,
           grade: grade + '',
-          learning_outcome: competency,
+          learning_outcome: competency.substring(0, 6) + '%', // we'll search with the competency code only
         },
       };
       const result = await this.appService.hasuraGraphQLCall(
@@ -563,6 +563,10 @@ export class QumlToOdkService {
             }
           }
         }
+      } else {
+        throw new InternalServerErrorException(
+          'Competency mapping not found in DB',
+        );
       }
     }
   }

@@ -28,7 +28,7 @@ export class CsvJsonToOdkService extends QumlToOdkService {
         filter['result'] = result;
       } catch (e) {
         error = e.toString();
-        filter['result'] = error;
+        filter['result'] = 'Error: ' + error;
       }
       response.push(filter);
       this.logger.debug(`Finished ${i}/${this.filters.length}...`);
