@@ -62,35 +62,40 @@ export class FormService {
   ): Promise<FormUploadStatus> {
     //TODO: Check total size of images + file should be less than 10MB
     const filename = (formFilePath) => formFilePath.split('/').slice(-1)[0];
-    return this.odkClient.request(
-      async function (data): Promise<FormUploadStatus> {
-        const formData = new FormData();
-        const file = fs.createReadStream(formFilePath);
+    return new Promise((resolve, reject) => {
+      this.odkClient.request(
+        async function (data): Promise<FormUploadStatus> {
+          const formData = new FormData();
+          const file = fs.createReadStream(formFilePath);
 
-        // Add file
-        formData.append('form_def_file', file, filename(formFilePath));
+          // Add file
+          formData.append('form_def_file', file, filename(formFilePath));
 
-        // Add images
-        if (imagesFilePaths.length > 0) {
-          for (let i = 0; i < imagesFilePaths.length; i++) {
-            const imageFile = fs.createReadStream(imagesFilePaths[i]);
-            formData.append(
-              'mediaFiles',
-              imageFile,
-              filename(imagesFilePaths[i]),
-            );
+          // Add images
+          if (imagesFilePaths.length > 0) {
+            for (let i = 0; i < imagesFilePaths.length; i++) {
+              const imageFile = fs.createReadStream(imagesFilePaths[i]);
+              formData.append(
+                'mediaFiles',
+                imageFile,
+                filename(imagesFilePaths[i]),
+              );
+            }
           }
-        }
-        const requestOptions = {
-          method: 'POST',
-          headers: {
-            Cookie: data.cookie,
-          },
-          body: formData,
-        };
-        return await fetch(this.extras.ODK_FORM_UPLOAD_URL, requestOptions)
-          .then((response) => response.text())
-          .then(async (result): Promise<FormUploadStatus> => {
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              Cookie: data.cookie,
+            },
+            body: formData,
+            timeout: 10000,
+          };
+          try {
+            const response = await fetch(
+              this.extras.ODK_FORM_UPLOAD_URL,
+              requestOptions,
+            );
+            const result = await response.text();
             if (result.includes('Successful form upload.')) {
               const data = fs.readFileSync(formFilePath);
               try {
@@ -104,57 +109,61 @@ export class FormService {
                 } else {
                   formID = formDef['h:html']['h:head'].model.instance.data.id;
                 }
-                return {
+                resolve({
                   status: 'UPLOADED',
                   data: {
                     formID,
                   },
-                };
+                });
+                return;
               } catch (e) {
                 console.log(e);
                 const checkPoint = 'CP-1';
-                return {
+                reject({
                   status: 'ERROR',
                   errorCode:
                     ODKMessages.UPLOAD.EXCEPTION_CODE + '-' + checkPoint,
                   errorMessage: ODKMessages.UPLOAD.UPLOAD_FAIL_MESSAGE,
                   data: {},
-                };
+                });
+                return;
               }
             } else {
               const checkPoint = 'CP-2';
               console.log(result);
-              return {
+              reject({
                 status: 'ERROR',
                 errorCode: ODKMessages.UPLOAD.EXCEPTION_CODE + '-' + checkPoint,
                 errorMessage: ODKMessages.UPLOAD.UPLOAD_FAIL_MESSAGE,
                 data: {},
-              };
+              });
             }
-          })
-          .catch((error) => {
-            console.log({ error });
+          } catch (error) {
+            console.log(error);
             const checkPoint = 'CP-3';
-            return {
+            reject({
               status: 'ERROR',
               errorCode: ODKMessages.UPLOAD.EXCEPTION_CODE + '-' + checkPoint,
               errorMessage: ODKMessages.UPLOAD.UPLOAD_FAIL_MESSAGE,
               data: {},
-            };
+            });
+          }
+        },
+        function (errorCode): FormUploadStatus {
+          console.log('My error..');
+          console.log({ errorCode });
+          const checkPoint = 'CP-4';
+          reject({
+            status: 'ERROR',
+            errorCode: ODKMessages.UPLOAD.EXCEPTION_CODE + '-' + checkPoint,
+            errorMessage: ODKMessages.UPLOAD.UPLOAD_FAIL_MESSAGE,
+            data: {},
           });
-      },
-      function (errorCode): FormUploadStatus {
-        console.log({ errorCode });
-        const checkPoint = 'CP-4';
-        return {
-          status: 'ERROR',
-          errorCode: ODKMessages.UPLOAD.EXCEPTION_CODE + '-' + checkPoint,
-          errorMessage: ODKMessages.UPLOAD.UPLOAD_FAIL_MESSAGE,
-          data: {},
-        };
-      },
-      null,
-      this,
-    );
+          return;
+        },
+        null,
+        this,
+      );
+    });
   }
 }
