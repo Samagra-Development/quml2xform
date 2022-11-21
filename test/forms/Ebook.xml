@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:odk="http://www.opendatakit.org/xforms" xmlns:orx="http://openrosa.org/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <h:head>
+        <h:title>Ebook</h:title>
+        <model odk:xforms-version="1.0.0">
+            <itext>
+                <translation lang="espanol">
+                    <text id="/data/g1/parameter_observed:label">
+                        <value>¿Qué quieres reportar?</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/fauna:label">
+                        <value>Fauna</value>
+                        <value form="image">jr://images/huillin.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/flora:label">
+                        <value>Flora</value>
+                        <value form="image">jr://images/bulrush.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/rellenos:label">
+                        <value>Rellenos</value>
+                        <value form="image">jr://images/rellenos.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/basura:label">
+                        <value>Basura</value>
+                        <value form="image">jr://images/basura.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/agua_superficial:label">
+                        <value>Agua Superficial</value>
+                        <value form="image">jr://images/agua_superficial.jpg</value>
+                    </text>
+                </translation>
+                <translation lang="english">
+                    <text id="/data/g1/parameter_observed:label">
+                        <value>What is it that you want to report?</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/fauna:label">
+                        <value>Fauna</value>
+                        <value form="image">jr://images/huillin.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/flora:label">
+                        <value>Flora</value>
+                        <value form="image">jr://images/bulrush.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/rellenos:label">
+                        <value>Fillings</value>
+                        <value form="image">jr://images/rellenos.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/basura:label">
+                        <value>Trash</value>
+                        <value form="image">jr://images/basura.jpg</value>
+                    </text>
+                    <text id="/data/g1/parameter_observed/agua_superficial:label">
+                        <value>Surface Water</value>
+                        <value form="image">jr://images/agua_superficial.jpg</value>
+                    </text>
+                </translation>
+            </itext>
+            <instance>
+                <data id="Ebook">
+                    <g1>
+                        <parameter_observed />
+                    </g1>
+                    <meta>
+                        <instanceID />
+                    </meta>
+                </data>
+            </instance>
+            <bind nodeset="/data/g1/parameter_observed" type="string" />
+            <bind jr:preload="uid" nodeset="/data/meta/instanceID" readonly="true()" type="string" />
+        </model>
+    </h:head>
+    <h:body>
+        <group appearance="field-list" ref="/data/g1">
+            <select1 ref="/data/g1/parameter_observed">
+                <label ref="jr:itext('/data/g1/parameter_observed:label')" />
+                <item>
+                    <label ref="jr:itext('/data/g1/parameter_observed/fauna:label')" />
+                    <value>fauna</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('/data/g1/parameter_observed/flora:label')" />
+                    <value>flora</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('/data/g1/parameter_observed/rellenos:label')" />
+                    <value>rellenos</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('/data/g1/parameter_observed/basura:label')" />
+                    <value>basura</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('/data/g1/parameter_observed/agua_superficial:label')" />
+                    <value>agua_superficial</value>
+                </item>
+            </select1>
+        </group>
+    </h:body>
+</h:html>
