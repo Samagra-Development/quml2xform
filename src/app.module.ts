@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { QumlToOdkModule } from './quml-to-odk/quml-to-odk.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
+import { FormService } from './form-upload/form.service';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { ConfigModule } from '@nestjs/config';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, FormService],
 })
 export class AppModule {}

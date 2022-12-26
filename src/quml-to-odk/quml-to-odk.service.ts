@@ -8,12 +8,11 @@ import {
 import { GenerateFormDto } from './dto/generate-form.dto';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, map } from 'rxjs';
-import { exec } from 'child_process';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
 import { McqParser } from './parsers/mcq.parser';
 import { QuestionTypesEnum } from './enums/question-types.enum';
-import { FormService } from './form-upload/form.service';
+import { FormService } from '../form-upload/form.service';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as striptags from 'striptags';
@@ -105,7 +104,12 @@ export class QumlToOdkService {
 
         this.logger.debug(`Generating ODK form..${i}`);
         const odkFormFile = './gen/xml/' + templateFileName + '.xml';
-        if (!(await this.convertExcelToOdkForm(xlsxFormFile, odkFormFile))) {
+        if (
+          !(await this.appService.convertExcelToOdkForm(
+            xlsxFormFile,
+            odkFormFile,
+          ))
+        ) {
           throw new InternalServerErrorException('Form generation failed.');
         }
 
@@ -257,32 +261,6 @@ export class QumlToOdkService {
       }
     }
     return result;
-  }
-
-  private async convertExcelToOdkForm(
-    inputFile: string,
-    outputFile: string,
-  ): Promise<boolean> {
-    // Make sure the binary is installed system wide; Ref: https://github.com/XLSForm/pyxform
-    const command = 'xls2xform ' + inputFile + ' ' + outputFile;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this;
-    return await new Promise(function (resolve, reject) {
-      exec(command, (error) => {
-        if (error) {
-          self.logger.error('Error generating ODK form: ', error);
-          reject(false);
-          return;
-        }
-        resolve(true);
-      });
-    })
-      .then((success: boolean) => {
-        return success;
-      })
-      .catch((failed: boolean) => {
-        return failed;
-      });
   }
 
   public static cleanHtml(

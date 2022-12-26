@@ -3,7 +3,7 @@ import { QumlToOdkService } from './quml-to-odk.service';
 import { QumlToOdkController } from './quml-to-odk.controller';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
-import { FormService } from './form-upload/form.service';
+import { FormService } from '../form-upload/form.service';
 import { AppService } from '../app.service';
 import { CsvJsonToOdkService } from './csv-json-to-odk.service';
 
