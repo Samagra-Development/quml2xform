@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -20,6 +21,11 @@ export class AppController {
   @Post('xslx-to-odk')
   @UseInterceptors(FileInterceptor('file', { dest: './gen/zip/uploaded' }))
   xslxToOdk(@UploadedFile() file: Express.Multer.File) {
-    return this.appService.xslxToOdk(file);
+    return this.appService.xslxToOdk(file.path, file.filename);
+  }
+
+  @Post('xslx-to-odk/via-json')
+  xslxToOdkViaJson(@Body() body) {
+    return this.appService.xslxToOdkViaJson(body);
   }
 }

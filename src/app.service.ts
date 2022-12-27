@@ -9,6 +9,8 @@ import { lastValueFrom, map } from 'rxjs';
 import AdmZip = require('adm-zip');
 import { exec } from 'child_process';
 import { FormService } from './form-upload/form.service';
+import { v4 as uuid } from 'uuid';
+import * as fs from 'fs';
 
 @Injectable()
 export class AppService {
@@ -80,15 +82,15 @@ export class AppService {
       });
   }
 
-  async xslxToOdk(file: Express.Multer.File) {
+  public async xslxToOdk(filePath: string, fileName: string) {
     this.logger.log('Processing zip file..');
-    const zip = new AdmZip(file.path);
+    const zip = new AdmZip(filePath);
     if (!zip.test()) {
       this.logger.error('Invalid zip uploaded.');
       throw new UnprocessableEntityException('Not a valid zip file.');
     }
 
-    const targetPath: string = './gen/zip/extracted/' + file.filename;
+    const targetPath: string = './gen/zip/extracted/' + fileName;
     zip.extractAllTo(targetPath, true);
     this.logger.log(`Zip extracted to: ${targetPath}`);
 
@@ -96,7 +98,6 @@ export class AppService {
     zip.forEach((zipEntry) => {
       if (zipEntry.name != '' && zipEntry.entryName.includes('images/')) {
         // it's an image
-        this.logger.log(zipEntry);
         formImageFiles.push(targetPath + '/' + zipEntry.entryName);
       }
     });
@@ -133,5 +134,53 @@ export class AppService {
       error: error,
       errorMsg: errorMsg,
     };
+  }
+
+  public async xslxToOdkViaJson(
+    body: Array<{
+      url: string;
+      grade: number;
+      subject: string;
+    }>,
+  ) {
+    const uploadResponse: Array<{
+      url: string;
+      grade: number;
+      subject: string;
+      error: string;
+    }> = [];
+    for (const item of body) {
+      const result = item;
+      this.logger.log(`Processing: ${JSON.stringify(item)}...`);
+      const fileName = uuid() + '.zip';
+      const targetPath: string = './gen/zip/uploaded/' + fileName;
+      const writer = fs.createWriteStream(targetPath);
+
+      const response = await this.httpService.axiosRef({
+        url: item.url,
+        method: 'GET',
+        responseType: 'stream',
+        responseEncoding: '7bit',
+      });
+      console.log(response.status);
+      response.data.pipe(writer);
+
+      this.logger.log(
+        `File downloaded from URL & saved at ${targetPath}. Processing file...`,
+      );
+
+      try {
+        const formResponse = await this.xslxToOdk(targetPath, fileName);
+        console.log(formResponse);
+        result['error'] = '';
+      } catch (e) {
+        result['error'] = e.toString();
+      }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      uploadResponse.push(result);
+    }
+
+    return uploadResponse;
   }
 }
