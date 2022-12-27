@@ -5,6 +5,7 @@ import { QumlToOdkModule } from './quml-to-odk/quml-to-odk.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { FormService } from './form-upload/form.service';
+import { FormUploadModule } from './form-upload/form-upload.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FormService } from './form-upload/form.service';
       cache: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    FormUploadModule,
   ],
   controllers: [AppController],
   providers: [AppService, FormService],

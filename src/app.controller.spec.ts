@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { FormService } from './form-upload/form.service';
+import { ConfigService } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+import { FormUploadModule } from './form-upload/form-upload.module';
+import { AppModule } from './app.module';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -8,7 +13,8 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [AppService, ConfigService, FormService],
+      imports: [AppModule, FormUploadModule, HttpModule],
     }).compile();
 
     appController = app.get<AppController>(AppController);
