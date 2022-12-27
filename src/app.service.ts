@@ -162,16 +162,28 @@ export class AppService {
         responseType: 'stream',
         responseEncoding: '7bit',
       });
-      console.log(response.status);
-      response.data.pipe(writer);
 
-      this.logger.log(
-        `File downloaded from URL & saved at ${targetPath}. Processing file...`,
-      );
+      await new Promise((resolve, reject) => {
+        response.data.pipe(writer);
+        let error = null;
+        writer.on('error', (err) => {
+          error = err;
+          writer.close();
+          reject(err);
+        });
+
+        writer.on('close', () => {
+          this.logger.log(
+            `File downloaded from URL & saved at ${targetPath}. Processing file...`,
+          );
+          if (!error) {
+            resolve('File saved!');
+          }
+        });
+      });
 
       try {
-        const formResponse = await this.xslxToOdk(targetPath, fileName);
-        console.log(formResponse);
+        await this.xslxToOdk(targetPath, fileName);
         result['error'] = '';
       } catch (e) {
         result['error'] = e.toString();
