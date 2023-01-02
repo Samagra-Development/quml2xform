@@ -83,6 +83,20 @@ POST {{url}}/quml-to-odk/via-json?randomQuestionsCount=3&board=State (Haryana)
 ```
 CSV to JSON conversion tool: https://csvjson.com/csv2json
 
+### To generate forms via ZIP URLs
+A JSON body generated from the CSV should be passed as per the format below:
+```
+POST {{url}}/xslx-to-odk/via-json
+[
+    {
+        "url": "http://URL-TO-DOWNLOAD-ZIP",
+        "grade": 1,
+        "subject": "Hindi"
+    },
+    ...
+]
+```
+
 ## Form IDs upload on Hasura
 - Ensure the tables `competencies` & `workflow_refids_mapping` exists on Hasura DB. Migration files exists at path `hasura-migrations/`
 - Configure variables `HASURA_DUMP_FORMS_MAPPING`, `HASURA_GRAPHQL_URL` & `HASURA_ADMIN_SECRET`
