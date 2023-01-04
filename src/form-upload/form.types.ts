@@ -6,7 +6,7 @@ export type FormUploadStatus = {
   data?: any;
 };
 
-export enum FormUploadType {
+export enum FormUploadOn {
   CENTRAL = 'CENTRAL',
   AGGREGATE = 'AGGREGATE',
 }
