@@ -1,21 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QumlToOdkService } from './quml-to-odk.service';
-import { ConfigModule } from '@nestjs/config';
+import { XlsxToOdkService } from './xlsx-to-odk.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { FormUploadModule } from '../form-upload/form-upload.module';
-import { AppModule } from '../app.module';
 import { AppService } from '../app.service';
 
-describe('QumlToOdkService', () => {
-  let service: QumlToOdkService;
+describe('XlsxToOdkService', () => {
+  let service: XlsxToOdkService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [QumlToOdkService, AppService],
-      imports: [AppModule, ConfigModule, HttpModule, FormUploadModule],
+      providers: [ConfigService, XlsxToOdkService, AppService],
+      imports: [ConfigModule, HttpModule, FormUploadModule],
     }).compile();
 
-    service = module.get<QumlToOdkService>(QumlToOdkService);
+    service = module.get<XlsxToOdkService>(XlsxToOdkService);
   });
 
   it('should be defined', () => {
