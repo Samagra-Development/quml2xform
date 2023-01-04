@@ -72,7 +72,7 @@ export class CentralFormService implements FormUploadInterface {
 
       try {
         // Upload all the media
-        imagesFilePaths.map(async (path) => {
+        for (const path of imagesFilePaths) {
           this.logger.log(`Uploading image.. ${path}`);
           const filename = path.split('/').slice(-1)[0];
           const imageUploadResponse = await fetch(
@@ -84,14 +84,14 @@ export class CentralFormService implements FormUploadInterface {
                 'Content-Type': '*/*',
               },
               body: fs.readFileSync(path),
-              redirect: 'follow',
+              timeout: 10000,
             },
           );
           await imageUploadResponse.text();
           if (imageUploadResponse.status !== 200) {
             throw new Error('Image Upload failed!!!');
           }
-        });
+        }
 
         // images uploaded successfully; let's publish the form now.
         this.logger.log(`Publishing form..`);
@@ -105,6 +105,7 @@ export class CentralFormService implements FormUploadInterface {
             headers: {
               Authorization: `Basic ${this.TOKEN}`,
             },
+            timeout: 10000,
           },
         );
         this.logger.log(

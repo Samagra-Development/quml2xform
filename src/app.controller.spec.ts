@@ -4,7 +4,6 @@ import { AppService } from './app.service';
 import { FormService } from './form-upload/form.service';
 import { ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
-import { FormUploadModule } from './form-upload/form-upload.module';
 import { AppModule } from './app.module';
 
 describe('AppController', () => {
@@ -14,7 +13,7 @@ describe('AppController', () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [AppService, ConfigService, FormService],
-      imports: [AppModule, FormUploadModule, HttpModule],
+      imports: [AppModule, HttpModule],
     }).compile();
 
     appController = app.get<AppController>(AppController);
