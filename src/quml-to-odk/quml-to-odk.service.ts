@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -12,13 +13,14 @@ import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
 import { McqParser } from './parsers/mcq.parser';
 import { QuestionTypesEnum } from './enums/question-types.enum';
-import { FormService } from '../form-upload/form.service';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as striptags from 'striptags';
 import nodeHtmlToImage from 'node-html-to-image';
 import { AppService } from '../app.service';
 import { HasuraUploadTypesEnum } from './enums/hasura-upload-types.enum';
+import { FormUploadServiceToken } from '../form-upload/form.types';
+import { FormUploadInterface } from '../form-upload/form-upload.interface';
 
 @Injectable()
 export class QumlToOdkService {
@@ -35,7 +37,8 @@ export class QumlToOdkService {
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-    private readonly formService: FormService,
+    @Inject(FormUploadServiceToken)
+    private readonly formService: FormUploadInterface,
     private readonly appService: AppService,
   ) {
     this.baseUrl = configService.get<string>('QUML_ODK_BASE_URL');

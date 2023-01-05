@@ -6,7 +6,8 @@ import { HttpModule } from '@nestjs/axios';
 import { FormService } from '../form-upload/form.service';
 import { AppService } from '../app.service';
 import { CsvJsonToOdkService } from './csv-json-to-odk.service';
-import { FormUploadModule } from '../form-upload/form-upload.module';
+import { forwardRef } from '@nestjs/common';
+import { AppModule } from '../app.module';
 
 describe('QumlToOdkController', () => {
   let controller: QumlToOdkController;
@@ -20,7 +21,7 @@ describe('QumlToOdkController', () => {
         FormService,
         CsvJsonToOdkService,
       ],
-      imports: [ConfigModule, HttpModule, FormUploadModule],
+      imports: [ConfigModule, HttpModule, forwardRef(() => AppModule)],
     }).compile();
 
     controller = module.get<QumlToOdkController>(QumlToOdkController);

@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch';
 import digestAuthRequest from './digestAuthRequest';
-import { ODK as ODKMessages, PROGRAM as ProgramMessages } from './messages';
+import { ODK as ODKMessages } from './messages';
 import { FormUploadStatus } from './form.types';
+import { FormUploadInterface } from './form-upload.interface';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const FormData = require('form-data');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -13,15 +14,17 @@ const fs = require('fs');
  * The service codes taken from here: https://github.com/samagra-comms/uci-apis/blob/v2/v2/uci/src/modules/form/form.service.ts
  */
 @Injectable()
-export class FormService {
+export class FormService implements FormUploadInterface {
   odkClient: any;
   ODK_FILTER_URL: string;
   ODK_FORM_UPLOAD_URL: string;
   TRANSFORMER_BASE_URL: string;
-  errCode =
-    ProgramMessages.EXCEPTION_CODE + '_' + ODKMessages.UPLOAD.EXCEPTION_CODE;
+
+  protected readonly logger = new Logger(FormService.name); // logger instance
 
   constructor(private configService: ConfigService) {
+    this.logger.log('ODK Aggregate Service initialised..');
+    console.log('ODK Aggregate Service initialised..');
     this.ODK_FILTER_URL = `${this.configService.get<string>(
       'ODK_BASE_URL',
     )}/Aggregate.html#submissions/filter///`;
