@@ -93,27 +93,29 @@ export class CentralFormService implements FormUploadInterface {
           }
         }
 
-        // images uploaded successfully; let's publish the form now.
-        this.logger.log(`Publishing form..`);
-        this.logger.log(
-          `${this.ODK_FORM_UPLOAD_URL}/${result.xmlFormId}/draft/publish?version=${result.version}`,
-        );
-        const formPublishResponse = await fetch(
-          `${this.ODK_FORM_UPLOAD_URL}/${result.xmlFormId}/draft/publish?version=${result.version}`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Basic ${this.TOKEN}`,
+        if (imagesFilePaths.length) {
+          // images uploaded successfully; let's publish the form now, because we uploaded it as draft before.
+          this.logger.log(`Publishing form..`);
+          this.logger.log(
+            `${this.ODK_FORM_UPLOAD_URL}/${result.xmlFormId}/draft/publish?version=${result.version}`,
+          );
+          const formPublishResponse = await fetch(
+            `${this.ODK_FORM_UPLOAD_URL}/${result.xmlFormId}/draft/publish?version=${result.version}`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Basic ${this.TOKEN}`,
+              },
+              timeout: 10000,
             },
-            timeout: 10000,
-          },
-        );
-        this.logger.log(
-          `Form publish response - ${await formPublishResponse.text()}`,
-        );
-        if (formPublishResponse.status !== 200) {
-          // noinspection ExceptionCaughtLocallyJS
-          throw new Error('Form publish failed!!!');
+          );
+          this.logger.log(
+            `Form publish response - ${await formPublishResponse.text()}`,
+          );
+          if (formPublishResponse.status !== 200) {
+            // noinspection ExceptionCaughtLocallyJS
+            throw new Error('Form publish failed!!!');
+          }
         }
       } catch (e) {
         this.logger.error(e);

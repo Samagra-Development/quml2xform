@@ -74,7 +74,7 @@ export class XlsxToOdkService {
         console.log(formUploadResponse);
         error = true;
         errorMsg = formUploadResponse.errorMessage;
-        formId = formUploadResponse?.data?.formID || '';
+        formId = formUploadResponse?.data?.formID || formUploadResponse?.formID || '';
         this.logger.error(
           `Form Upload error..`,
           JSON.stringify(formUploadResponse),
