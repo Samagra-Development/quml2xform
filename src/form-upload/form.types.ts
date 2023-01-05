@@ -6,7 +6,7 @@ export type FormUploadStatus = {
   data?: any;
 };
 
-export enum FormUploadOn {
+export enum OdkBackendType {
   CENTRAL = 'CENTRAL',
   AGGREGATE = 'AGGREGATE',
 }

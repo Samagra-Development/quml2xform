@@ -5,7 +5,10 @@ import { QumlToOdkModule } from './quml-to-odk/quml-to-odk.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { XlsxToOdkModule } from './xlsx-to-odk/xlsx-to-odk.module';
-import { FormUploadServiceToken, FormUploadOn } from './form-upload/form.types';
+import {
+  FormUploadServiceToken,
+  OdkBackendType,
+} from './form-upload/form.types';
 import { FormService } from './form-upload/form.service';
 import { CentralFormService } from './form-upload/central-form/central-form.service';
 
@@ -27,7 +30,7 @@ import { CentralFormService } from './form-upload/central-form/central-form.serv
     {
       provide: FormUploadServiceToken,
       useClass:
-        process.env.UPLOAD_FORM_TO == FormUploadOn.AGGREGATE
+        process.env.ODK_BACKEND_TYPE == OdkBackendType.AGGREGATE
           ? FormService // For ODK Aggregate form uploads
           : CentralFormService, // For ODK Central form uploads
     },
