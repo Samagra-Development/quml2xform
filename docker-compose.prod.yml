@@ -3,11 +3,13 @@ version: '3.7'
 services:
   main:
     container_name: quml2xform
-    build:
-      context: .
+    image: samagragovernance/quml2xform:latest
     ports:
       - ${PORT}:3000
     env_file:
       - .env
     volumes:
-    - ./gen:/app/gen
+    - gen:/app/gen
+
+volumes:
+  gen:
