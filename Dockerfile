@@ -11,7 +11,6 @@ COPY yarn.lock ./
 RUN yarn install
 COPY . .
 RUN yarn run build
-COPY dist ./dist
 
 FROM node:16
 
