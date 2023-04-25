@@ -25,9 +25,9 @@ import { FormUploadInterface } from '../form-upload/form-upload.interface';
 @Injectable()
 export class QumlToOdkService {
   private readonly maxFormsAllowed: number;
-  private readonly baseUrl: string;
-  private readonly questionBankUrl: string;
-  private readonly questionDetailsUrl: string;
+  protected readonly baseUrl: string;
+  protected readonly questionBankUrl: string;
+  protected readonly questionDetailsUrl: string;
   private readonly hasuraDumpFormMapping: boolean;
   private readonly hasuraUploadType: string;
   private readonly uploadFormsToAggregate: boolean;
@@ -226,7 +226,7 @@ export class QumlToOdkService {
     return questions;
   }
 
-  private async fetchQuestionDetails(identifiers) {
+  protected async fetchQuestionDetails(identifiers) {
     let result = {};
     const chunkSize = 20; // because the API allows searching for 20 max at a time
     for (let i = 0; i < identifiers.length; i += chunkSize) {
