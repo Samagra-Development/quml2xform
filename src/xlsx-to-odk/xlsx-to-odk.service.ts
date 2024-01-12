@@ -8,7 +8,6 @@ import AdmZip = require('adm-zip');
 import { v4 as uuid } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { FormUploadServiceToken } from '../form-upload/form.types';
@@ -56,7 +55,20 @@ export class XlsxToOdkService {
 
     const inputFile = targetPath + '/form.xlsx';
     const odkFormFile = targetPath + '/form.xml';
-    await this.appService.convertExcelToOdkForm(inputFile, odkFormFile);
+    const convertRes = await this.appService.convertExcelToOdkForm(
+      inputFile,
+      odkFormFile,
+    );
+    if (!convertRes) {
+      return {
+        xlsxFile: inputFile,
+        odkFile: odkFormFile,
+        error: true,
+        errorMsg:
+          'Error converting Excel to ODK Form - please validate the input file',
+      };
+    }
+
     this.logger.log(`XML file generated & stored at: ${odkFormFile}`);
 
     let formId = '';
@@ -118,15 +130,14 @@ export class XlsxToOdkService {
     const promises = zip.getEntries().map(async (zipEntry) => {
       const fileName = zipEntry.entryName;
       const childZipFilePath = path.join(targetPath, zipEntry.entryName);
-      // Generate a hash for the filename
-      const hash = crypto
-        .createHash('sha256')
-        // extract the child zip at a random location
-        .update(fileName + Date.now().toString())
-        .digest('hex');
+      const makePathSafe = (inputString) =>
+        inputString.replace(/[\/\\:*?"<>| ()]/g, '');
 
       // Process and upload to ODK, and store the promise in the array
-      return this._processZipAndUploadToODK(childZipFilePath, hash);
+      return this._processZipAndUploadToODK(
+        childZipFilePath,
+        makePathSafe(fileName + Date.now()),
+      );
     });
 
     // Wait for all promises to resolve
