@@ -18,6 +18,12 @@ export class XlsxToOdkController {
     return this.service.xslxToOdk(file.path, file.filename);
   }
 
+  @Post('bulk/xslx-to-odk')
+  @UseInterceptors(FileInterceptor('file', { dest: './gen/zip/uploaded' }))
+  bulkXslxToOdk(@UploadedFile() file: Express.Multer.File) {
+    return this.service.xslxToOdk(file.path, file.filename, true);
+  }
+
   @Post('xslx-to-odk/via-json')
   xslxToOdkViaJson(@Body() body) {
     return this.service.xslxToOdkViaJson(body);

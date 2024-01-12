@@ -7,6 +7,8 @@ import {
 import AdmZip = require('adm-zip');
 import { v4 as uuid } from 'uuid';
 import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { FormUploadServiceToken } from '../form-upload/form.types';
@@ -29,7 +31,10 @@ export class XlsxToOdkService {
       configService.get<string>('UPLOAD_FORMS', 'FALSE') === 'TRUE';
   }
 
-  public async xslxToOdk(filePath: string, fileName: string) {
+  private async _processZipAndUploadToODK(filePath: string, fileName: string) {
+    /*
+    This function takes in a zip file, processes it and uploads to ODK
+    */
     this.logger.log('Processing zip file..');
     const zip = new AdmZip(filePath);
     if (!zip.test()) {
@@ -74,7 +79,8 @@ export class XlsxToOdkService {
         console.log(formUploadResponse);
         error = true;
         errorMsg = formUploadResponse.errorMessage;
-        formId = formUploadResponse?.data?.formID || formUploadResponse?.formID || '';
+        formId =
+          formUploadResponse?.data?.formID || formUploadResponse?.formID || '';
         this.logger.error(
           `Form Upload error..`,
           JSON.stringify(formUploadResponse),
@@ -88,6 +94,43 @@ export class XlsxToOdkService {
       error: error,
       errorMsg: errorMsg,
     };
+  }
+  public async xslxToOdk(
+    filePath: string,
+    fileName: string,
+    bulkUpload = false,
+  ) {
+    const results = [];
+    if (!bulkUpload) {
+      results.push(await this._processZipAndUploadToODK(filePath, fileName));
+      return results;
+    }
+    this.logger.log('Unzipping bulk uploaded zip files..');
+    const zip = new AdmZip(filePath);
+    if (!zip.test()) {
+      this.logger.error('Invalid bulk zip uploaded.');
+      throw new UnprocessableEntityException('Not a valid bullk zip file.');
+    }
+
+    const targetPath: string = './gen/zip/extracted/' + fileName;
+    zip.extractAllTo(targetPath, true);
+    this.logger.log(`Bulk Zip extracted to: ${targetPath}`);
+    const promises = zip.getEntries().map(async (zipEntry) => {
+      const fileName = zipEntry.entryName;
+      const childZipFilePath = path.join(targetPath, zipEntry.entryName);
+      // Generate a hash for the filename
+      const hash = crypto
+        .createHash('sha256')
+        // extract the child zip at a random location
+        .update(fileName + Date.now().toString())
+        .digest('hex');
+
+      // Process and upload to ODK, and store the promise in the array
+      return this._processZipAndUploadToODK(childZipFilePath, hash);
+    });
+
+    // Wait for all promises to resolve
+    return await Promise.all(promises);
   }
 
   public async xslxToOdkViaJson(
@@ -139,8 +182,8 @@ export class XlsxToOdkService {
 
       try {
         const uploadResponse = await this.xslxToOdk(targetPath, fileName);
-        result['formId'] = uploadResponse.formId;
-        result['error'] = uploadResponse.errorMsg;
+        result['formId'] = uploadResponse[0].formId;
+        result['error'] = uploadResponse[0].errorMsg;
       } catch (e) {
         result['error'] = e.toString();
       }
