@@ -11,6 +11,7 @@ import {
 } from './form-upload/form.types';
 import { FormService } from './form-upload/form.service';
 import { CentralFormService } from './form-upload/central-form/central-form.service';
+import { ZipFormsModule } from './zip-forms/zip-forms.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CentralFormService } from './form-upload/central-form/central-form.serv
     HttpModule,
     QumlToOdkModule,
     XlsxToOdkModule,
+    ZipFormsModule,
     // FormUploadModule,
   ],
   controllers: [AppController],
