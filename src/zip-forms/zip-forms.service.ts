@@ -75,7 +75,7 @@ export class ZipFormsService {
     const workbook = XLSX.read(excelFileBuffer, { type: 'buffer' });
 
     // Get the 'settings' named sheet from the workbook,
-    const sheet = workbook.Sheets['settings'] ||  workbook.Sheets['setting'];
+    const sheet = workbook.Sheets['settings'];
 
     if (!sheet) {
       // Throw an exception if the 'settings' sheet is not found
