@@ -75,12 +75,12 @@ export class ZipFormsService {
     const workbook = XLSX.read(excelFileBuffer, { type: 'buffer' });
 
     // Get the 'settings' named sheet from the workbook,
-    const sheet = workbook.Sheets['settings'] ||  workbook.Sheets['setting'];;
+    const sheet = workbook.Sheets['settings'];
 
     if (!sheet) {
       // Throw an exception if the 'settings' sheet is not found
       throw new NotFoundException(
-        `Sheet "settings" not found in file:- ${fileName}`,
+        `Sheet 'settings' not found in file:- '${fileName}'`,
       );
     }
 
@@ -155,7 +155,7 @@ export class ZipFormsService {
           if (directory) {
             // If it's a directory, create a nested zip for its contents
             const nestedZipBuffer = await this.createZipFiles(filesInDirectory);
-            zip.file(`${directory}.zip`, nestedZipBuffer);
+            zip.file(directory, nestedZipBuffer);
           } else {
             // Otherwise, add files directly to the zip
             for (const file of filesInDirectory) {
