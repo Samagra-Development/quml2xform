@@ -31,8 +31,12 @@ export class XlsxToOdkService {
   }
 
   private async _processZipAndUploadToODK(filePath: string, fileName: string) {
-    /*
-    This function takes in a zip file, processes it and uploads to ODK
+   const targetPath: string = './gen/zip/extracted/' + fileName;
+   const inputFile = targetPath + '/form.xlsx';
+   const odkFormFile = targetPath + '/form.xml';
+   try {
+     /*
+    This function takes in a zip file, processes it, and uploads to ODK
     */
     this.logger.log('Processing zip file..');
     const zip = new AdmZip(filePath);
@@ -41,7 +45,6 @@ export class XlsxToOdkService {
       throw new UnprocessableEntityException('Not a valid zip file.');
     }
 
-    const targetPath: string = './gen/zip/extracted/' + fileName;
     zip.extractAllTo(targetPath, true);
     this.logger.log(`Zip extracted to: ${targetPath}`);
 
@@ -53,8 +56,6 @@ export class XlsxToOdkService {
       }
     });
 
-    const inputFile = targetPath + '/form.xlsx';
-    const odkFormFile = targetPath + '/form.xml';
     const convertRes = await this.appService.convertExcelToOdkForm(
       inputFile,
       odkFormFile,
@@ -106,7 +107,17 @@ export class XlsxToOdkService {
       error: error,
       errorMsg: errorMsg,
     };
+  } catch (error) {
+    this.logger.error('Error converting Excel to ODK Form:', error);
+    return {
+      xlsxFile: inputFile,
+      odkFile: odkFormFile,
+      error: true,
+      errorMsg: error.message || 'Error converting Excel to ODK Form',
+    };
   }
+ }
+
   public async xslxToOdk(
     filePath: string,
     fileName: string,
@@ -127,18 +138,30 @@ export class XlsxToOdkService {
     const targetPath: string = './gen/zip/extracted/' + fileName;
     zip.extractAllTo(targetPath, true);
     this.logger.log(`Bulk Zip extracted to: ${targetPath}`);
-    const promises = zip.getEntries().map(async (zipEntry) => {
+    const promises = [];
+    for (const zipEntry of zip.getEntries()) {
       const fileName = zipEntry.entryName;
       const childZipFilePath = path.join(targetPath, zipEntry.entryName);
       const makePathSafe = (inputString) =>
         inputString.replace(/[\/\\:*?"<>| ()]/g, '');
 
+      const fileLastName = fileName.split('/').pop();
+      if (
+        zipEntry.isDirectory ||
+        !fileLastName ||
+        fileLastName.startsWith('.')
+      ) {
+        this.logger.debug(`Skipping directory/file: ${fileName}`);
+        continue; // Skip processing directories, hidden files and system files
+      }
+
       // Process and upload to ODK, and store the promise in the array
-      return this._processZipAndUploadToODK(
+      promises.push(
+      this._processZipAndUploadToODK(
         childZipFilePath,
         makePathSafe(fileName + Date.now()),
-      );
-    });
+      ));
+    }
 
     // Wait for all promises to resolve
     return await Promise.all(promises);
