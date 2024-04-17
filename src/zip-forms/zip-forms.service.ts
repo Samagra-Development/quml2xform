@@ -32,6 +32,12 @@ export class ZipFormsService {
     return await this.createZipFiles(unzipResponse);
   }
 
+  public isFileAccepted(fileName: string) {
+    const extractedFileName = fileName.split('/').pop();
+    // Check if the file is hidden file or system file
+    return !(!extractedFileName || extractedFileName.startsWith('.'));
+  }
+
   async unzipFile(
     buffer: Buffer,
     basePath = '',
@@ -40,13 +46,18 @@ export class ZipFormsService {
       const zip = new JSZip();
       await zip.loadAsync(buffer);
 
-      const files = Object.values(zip.files);
+      const files: JSZip.JSZipObject[] = Object.values(zip.files);
       const extractedFiles = [];
 
       for (const file of files) {
-        const filePath = basePath ? `${basePath}/${file.name}` : file.name;
+        const fileName: string = file.name;
+        const isFileAccepted = this.isFileAccepted(fileName);
+        if (!isFileAccepted) {
+          continue; //  skip hidden files, system files
+        }
+        const filePath = basePath ? `${basePath}/${fileName}` : fileName;
 
-        if (file.dir || file.name.endsWith('.zip')) {
+        if (file.dir || fileName.endsWith('.zip')) {
           // If it's a directory or a zip file, recursively unzip its contents
           const subFiles = await this.unzipFile(
             await file.async('nodebuffer'),
@@ -122,7 +133,6 @@ export class ZipFormsService {
       type: 'buffer',
     });
   }
-
 
   async createZipFiles(
     files: { fileName: string; fileBuffer: Buffer }[],
